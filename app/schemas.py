@@ -63,3 +63,25 @@ class ProductResponse(ProductBase):
     warehouse_id: int
     class Config:
         from_attributes = True
+
+
+class StockIncreaseRequest(BaseModel):
+    quantity: int
+    supplierId: int  
+
+class StockDecreaseRequest(BaseModel):
+    quantity: int
+    reason: str
+
+class StockTransferRequest(BaseModel):
+    quantity: int
+    targetWarehouseId: int
+    reason: str
+
+class InventoryResponse(BaseModel):
+    productId: int
+    sku: str
+    stockQuantity: int
+
+    class Config:
+        from_attributes = True

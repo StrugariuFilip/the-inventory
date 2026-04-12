@@ -23,7 +23,7 @@ class Product(Base):
     __tablename__ = "products"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
-    sku = Column(String, unique=True, index=True)
+    sku = Column(String, index=True)
     description = Column(String)
     price = Column(Float)
     category = Column(String)
