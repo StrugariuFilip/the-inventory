@@ -44,10 +44,9 @@ class ProductBase(BaseModel):
     price: float  
     category: str
     supplier_id: int
-    stockQuantity: int = 0
 
 class ProductCreate(ProductBase):
-    pass
+    stockQuantity: int = 0
 
 class ProductUpdate(BaseModel):
     name: Optional[str] = None
@@ -61,6 +60,7 @@ class ProductUpdate(BaseModel):
 class ProductResponse(ProductBase):
     id: int
     warehouse_id: int
+    stockQuantity: int
     class Config:
         from_attributes = True
 
@@ -71,12 +71,11 @@ class StockIncreaseRequest(BaseModel):
 
 class StockDecreaseRequest(BaseModel):
     quantity: int
-    reason: str
 
 class StockTransferRequest(BaseModel):
     quantity: int
     targetWarehouseId: int
-    reason: str
+
 
 class InventoryResponse(BaseModel):
     productId: int
