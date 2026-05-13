@@ -10,6 +10,11 @@ router = APIRouter(
     tags=["Product Management"]
 )
 
+
+@router.get("/all", response_model=List[schemas.ProductResponse])
+def get_absolutely_all_products(db: Session = Depends(get_db)):
+    return db.query(models.Product).all()
+
 @router.post("", status_code=201)
 def create_product(warehouseId: int, product: schemas.ProductCreate, db: Session = Depends(get_db)):
     warehouse = db.query(models.Warehouse).filter(models.Warehouse.id == warehouseId).first()

@@ -142,3 +142,24 @@ def patch_supplier(id: int, updated_fields: schemas.SupplierUpdate, db: Session 
         raise HTTPException(status_code=500, detail="Internal server error applying partial update.")
         
     return supplier
+
+@router.delete("/{id}", status_code=204)
+def delete_supplier(id: int, db: Session = Depends(get_db)):
+    if id <= 0:
+        raise HTTPException(status_code=400, detail="Invalid supplier ID.")
+        
+    supplier = db.query(models.Supplier).filter(models.Supplier.id == id).first()
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Supplier not found.")
+    
+    try:
+        db.delete(supplier)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Cannot delete supplier: linked products detected.")
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Internal server error during deletion.")
+        
+    return None
