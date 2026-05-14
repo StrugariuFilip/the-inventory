@@ -17,17 +17,16 @@ export default function Footer() {
               THE INVENTORY v1.0
             </span>
           </div>
-       
-          <div className="flex shrink-0 flex-wrap justify-center items-center gap-x-8 gap-y-3 text-base font-semibold text-slate-400">
+           <div className="flex shrink-0 flex-wrap justify-center items-center gap-x-8 gap-y-6 text-base font-semibold text-slate-400">
             
             <a 
               href="https://github.com/StrugariuFilip/the-inventory" 
               target="_blank" 
               rel="noreferrer" 
-              className="flex items-center space-x-2 hover:text-white transition-colors"
+              className="group flex items-center space-x-2 hover:text-white transition-all duration-300"
             >
-              <Code2 className="h-5 w-5 text-sky-500" />
-              <span>Source Code</span>
+              <Code2 className="h-5 w-5 text-sky-500 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300" />
+              <span className="group-hover:drop-shadow-[0_0_8px_rgba(14,165,233,0.5)]">Source Code</span>
             </a>
           
             <a 
@@ -47,10 +46,14 @@ export default function Footer() {
               </span>
             </a>
                       
-            <span className="flex items-center space-x-2 hover:text-white transition-colors cursor-pointer group">
-              <FileText className="h-4 w-4 text-indigo-400 group-hover:text-indigo-300 transition-colors" />
-              <span>Documentation</span>
-            </span>
+            <a 
+              href="/public/The-Inventory.pdf"
+              download="The-Inventory.pdf"
+              className="group flex items-center space-x-2 hover:text-white transition-all duration-300 cursor-pointer"
+            >
+              <FileText className="h-4 w-4 text-indigo-400 group-hover:-translate-y-1 group-hover:text-indigo-300 transition-all duration-300" />
+              <span className="group-hover:drop-shadow-[0_0_8px_rgba(129,140,248,0.5)]">Documentation</span>
+            </a>
 
           </div>
           
@@ -73,7 +76,7 @@ export default function Footer() {
             </a>
 
             <a 
-              href="https://instagram.com" 
+              href="https://www.instagram.com/filipstrugariu/" 
               target="_blank" 
               rel="noreferrer" 
               className="relative group block p-2.5 rounded-xl transition-all duration-300 hover:scale-110 cursor-pointer text-pink-500 hover:text-pink-400"
@@ -120,7 +123,7 @@ export default function Footer() {
         </div>
 
         <div className="pt-8 border-t border-slate-900/80 text-center">
-          <p className="text-xs text-slate-600 font-mono tracking-tight">
+          <p className="text-[10px] text-slate-600 font-mono tracking-widest uppercase">
             &copy; 2026 Strugariu Filip-Daniel. All rights reserved.
           </p>
         </div>
