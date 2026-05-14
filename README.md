@@ -1,15 +1,23 @@
 # 📦 THE INVENTORY | Full-Stack Management System
 
+**🔗 Live Demo:** https://fermo.top/The-inventory/  
 **Realizat de:** Strugariu Filip-Daniel
-**Status:** Producție / Deploy
 
 ---
 
 ## 🎯 Obiectivul Proiectului
 
-**The Inventory** este un sistem complet de gestionare a stocurilor (Full-Stack), conceput pentru a monitoriza fluxurile de marfă între furnizori și depozite în timp real. Proiectul implementează o arhitectură modernă cu un backend robust (FastAPI) și o interfață responsivă (React).
+**The Inventory** este un sistem complet de gestionare a stocurilor (Full-Stack), conceput pentru a monitoriza fluxurile de marfă între furnizori și depozite în timp real. Proiectul implementează o arhitectură modernă cu un backend robust (**FastAPI**) și o interfață responsivă (**React**).
 
 Proiectul a fost inspirat de platforma [ASSIST Learning](https://learning.assist.ro/) și adaptat cu un design modern și futurist.
+
+---
+
+## 🌐 Arhitectură de Producție (Live Stack)
+
+- **Frontend Hosting:** Hostinger (Build static optimizat pe subfolder)
+- **Backend API:** Render (Serviciu web FastAPI)
+- **Bază de Date Live:** Supabase (Instanță cloud PostgreSQL)
 
 ---
 
@@ -36,25 +44,29 @@ Proiectul a fost inspirat de platforma [ASSIST Learning](https://learning.assist
 - **Supplier Directory:** Evidența furnizorilor și a contactelor unice.
 - **Stock Control:** Vizualizarea stocurilor în timp real cu logica de Transfer, Increase și Decrease.
 - **Mobile Responsive:** Interfață optimizată pentru utilizare pe orice dispozitiv (telefon, tabletă, desktop).
-- **Interactive API Docs:** Documentație Swagger completă pentru testarea rutelor.
+- **Interactive API Docs:** Documentație Swagger completă pentru testarea rutelor pe local.
 
 ---
 
-## 💻 Instalare și Pornire
+## 💻 Instalare și Pornire (Local)
 
 ### **1. Backend (FastAPI)**
 
+```bash
 cd backend
 .\.venv\Scripts\activate
 uvicorn app.main:app --reload
+```
 
 👉 **Swagger UI:** http://127.0.0.1:8000/docs
 
 ### **2. Frontend (React)**
 
+```bash
 cd frontend
 npm install
 npm run dev
+```
 
 ---
 
