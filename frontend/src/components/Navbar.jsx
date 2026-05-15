@@ -34,9 +34,10 @@ export default function Navbar({ activeTab, setActiveTab }) {
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 w-full">
           <button 
-            onClick={() => { setActiveTab('intro'); setIsOpen(false); }}
+            onClick={() => { setActiveTab('intro'); setIsOpen(false);window.scrollTo({ top: 0, behavior: 'smooth' }); }}
             className="flex items-center space-x-2 sm:space-x-3 group cursor-pointer active:scale-95 transition-all border-none bg-transparent outline-none flex-shrink min-w-0"
           >
+            
             <div className="p-1.5 sm:p-2 bg-gradient-to-tr from-indigo-500 via-sky-400 to-emerald-400 rounded-xl shadow-[0_0_15px_rgba(79,70,229,0.4)] group-hover:rotate-6 transition-all duration-300 shrink-0">
               <Package className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
