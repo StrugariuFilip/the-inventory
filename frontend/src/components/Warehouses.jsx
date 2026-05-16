@@ -6,7 +6,7 @@ import {
   Building2, Search, Edit, Zap, AlertTriangle, CheckCircle2, Loader2
 } from 'lucide-react';
 
-export default function Warehouses() {
+export default function Warehouses({ lang = 'ro' }) {
   const [warehouses, setWarehouses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false); 
@@ -59,7 +59,7 @@ export default function Warehouses() {
     setIsSubmitting(true);
 
     if (modalType === 'add' && (!formData.name.trim() || !formData.location.trim())) {
-      setError("All fields must be completed.");
+      setError(lang === 'ro' ? "Toate câmpurile trebuie completate." : "All fields must be completed.");
       setIsSubmitting(false);
       return;
     }
@@ -68,7 +68,7 @@ export default function Warehouses() {
       const isNameSame = formData.name.trim() === selectedWarehouse.name;
       const isLocationSame = formData.location.trim() === selectedWarehouse.location;
       if (isNameSame || isLocationSame) {
-        setError("Both fields must be modified for a Full Sync ( PUT ) operation.");
+        setError(lang === 'ro' ? "Ambele câmpuri trebuie modificate pentru o sincronizare completă (PUT)." : "Both fields must be modified for a full sync (PUT).");
         setIsSubmitting(false);
         return;
       }
@@ -80,16 +80,16 @@ export default function Warehouses() {
 
       if (modalType === 'add') {
           await axios.post(API_URL, formData);
-          actionLabel = "Warehouse Registered Successfully!";
+          actionLabel = lang === 'ro' ? "Depozit înregistrat cu succes!" : "Warehouse registered successfully!";
       } else if (modalType === 'put') {
           await axios.put(`${API_URL}/${selectedWarehouse.id}`, formData);
-          actionLabel = "FULL SYNC ( PUT ) Complete!";
+          actionLabel = lang === 'ro' ? "Sincronizare completă (PUT) finalizată!" : "Full sync (PUT) completed!";
       } else if (modalType === 'patch') {
           await axios.patch(`${API_URL}/${selectedWarehouse.id}`, formData);
-          actionLabel = "Quick Patch Applied!";
+          actionLabel = lang === 'ro' ? "Patch rapid aplicat!" : "Quick patch applied!";
       } else if (modalType === 'delete') {
           await axios.delete(`${API_URL}/${selectedWarehouse.id}`);
-          actionLabel = "Warehouse Deleted Successfully!";
+          actionLabel = lang === 'ro' ? "Depozit șters cu succes!" : "Warehouse deleted successfully!";
           currentToastType = 'danger';
       }
       
@@ -97,7 +97,7 @@ export default function Warehouses() {
       await fetchWarehouses();
       triggerToast(actionLabel, currentToastType);
     } catch (err) { 
-      setError(err.response?.data?.detail || "Database Error: Conflict detected."); 
+      setError(err.response?.data?.detail || (lang === 'ro' ? "Eroare bază de date: Conflict detectat." : "Database error: Conflict detected.")); 
     } finally {
       setIsSubmitting(false);
     }
@@ -121,9 +121,8 @@ export default function Warehouses() {
     }
   };
 
-    const filtered = warehouses.filter(w => {
+  const filtered = warehouses.filter(w => {
     const query = searchQuery.toLowerCase().trim();
-    
     return (
       w.id.toString().includes(query) ||
       w.name.toLowerCase().includes(query) ||
@@ -154,7 +153,7 @@ export default function Warehouses() {
             <Warehouse className="h-8 w-8 text-amber-500" />
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-white italic uppercase tracking-tighter whitespace-normal lg:whitespace-nowrap text-center lg:text-left leading-tight">
-            Warehouse Management
+            {lang === 'ro' ? 'Management depozite' : 'Warehouse management'}
           </h2>
         </div>
 
@@ -163,7 +162,7 @@ export default function Warehouses() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
             <input 
               type="text"
-              placeholder="FILTER BY ANYTHING..."
+              placeholder={lang === 'ro' ? 'Caută orice...' : 'Search anything...'}
               className="w-full bg-slate-950/90 border border-amber-500/30 rounded-xl py-3 pl-11 pr-4 text-xs text-white font-mono focus:border-amber-500 outline-none transition-all uppercase placeholder:text-slate-600 shadow-[0_0_15px_rgba(245,158,11,0.05)]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -174,7 +173,7 @@ export default function Warehouses() {
             className="flex items-center justify-center space-x-2 w-full sm:w-auto px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition-all active:scale-95 shadow-md cursor-pointer shrink-0"
           >
             <Plus className="h-4 w-4 stroke-[3]" />
-            <span className="font-bold tracking-tight">ADD WAREHOUSE</span>
+            <span className="font-bold tracking-tight uppercase">{lang === 'ro' ? 'Adaugă depozit' : 'Add warehouse'}</span>
           </button>
         </div>
       </div>
@@ -185,12 +184,16 @@ export default function Warehouses() {
              <Loader2 className="h-16 w-16 text-amber-500 animate-spin stroke-[1.5]" />
              <div className="absolute inset-0 blur-xl bg-amber-500/20 animate-pulse rounded-full" />
            </div>
-           <p className="text-[10px] font-black text-amber-500/60 uppercase tracking-[0.4em] animate-pulse">Synchronizing with Cloud</p>
+           <p className="text-[10px] font-black text-amber-500/60 uppercase tracking-[0.4em] animate-pulse">
+             {lang === 'ro' ? 'Se sincronizează cu cloud-ul' : 'Synchronizing with cloud'}
+           </p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="w-full py-20 bg-slate-900/20 border border-slate-800/80 rounded-3xl flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
            <AlertTriangle className="h-12 w-12 text-slate-600 stroke-[1.5]" />
-           <p className="text-sm font-black text-slate-500 uppercase tracking-widest font-mono">WAREHOUSE NOT FOUND</p>
+           <p className="text-sm font-black text-slate-500 uppercase tracking-widest font-mono">
+             {lang === 'ro' ? 'Nu a fost găsit niciun depozit' : 'No warehouse found'}
+           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -210,7 +213,7 @@ export default function Warehouses() {
                      >
                        <Edit size={14}/>
                        <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-950 text-sky-400 border border-slate-800 rounded text-[9px] font-black uppercase tracking-wider opacity-0 group-hover/btn:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-xl z-20">
-                         FULL SYNC ( PUT )
+                         {lang === 'ro' ? 'Sincronizare completă (PUT)' : 'Full sync (PUT)'}
                        </span>
                      </button>
 
@@ -221,7 +224,7 @@ export default function Warehouses() {
                      >
                        <Zap size={14}/>
                        <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-950 text-emerald-400 border border-slate-800 rounded text-[9px] font-black uppercase tracking-wider opacity-0 group-hover/btn:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-xl z-20">
-                         Quick Patch
+                         {lang === 'ro' ? 'Patch rapid' : 'Quick patch'}
                        </span>
                      </button>
 
@@ -232,7 +235,7 @@ export default function Warehouses() {
                      >
                        <Trash2 size={14}/>
                        <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-950 text-red-400 border border-slate-800 rounded text-[9px] font-black uppercase tracking-wider opacity-0 group-hover/btn:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-xl z-20">
-                         Delete
+                         {lang === 'ro' ? 'Șterge' : 'Delete'}
                        </span>
                      </button>
                   </div>
@@ -273,12 +276,16 @@ export default function Warehouses() {
             {modalType === 'delete' ? (
               <div className="text-center space-y-5 py-2">
                 <AlertTriangle className="h-12 w-12 text-red-500 mx-auto animate-pulse" />
-                <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Confirm Deletion?</h2>
+                <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">
+                  {lang === 'ro' ? 'Confirmi ștergerea?' : 'Confirm deletion?'}
+                </h2>
                 <div className="flex gap-3 max-w-xs mx-auto pt-2">
-                  <button disabled={isSubmitting} onClick={closeModals} className="flex-1 py-3 bg-slate-800 text-slate-300 rounded-xl font-black uppercase text-[10px] tracking-widest cursor-pointer disabled:opacity-50">Cancel</button>
+                  <button disabled={isSubmitting} onClick={closeModals} className="flex-1 py-3 bg-slate-800 text-slate-300 rounded-xl font-black uppercase text-[10px] tracking-widest cursor-pointer disabled:opacity-50">
+                    {lang === 'ro' ? 'Anulează' : 'Cancel'}
+                  </button>
                   <button disabled={isSubmitting} onClick={handleAction} className="flex-1 py-3 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest cursor-pointer shadow-lg shadow-red-600/20 disabled:opacity-50 flex items-center justify-center gap-2">
                     {isSubmitting && <Loader2 size={12} className="animate-spin" />}
-                    {isSubmitting ? 'DELETING...' : 'DELETE'}
+                    {isSubmitting ? (lang === 'ro' ? 'SE ȘTERGE...' : 'DELETING...') : (lang === 'ro' ? 'ȘTERGE' : 'DELETE')}
                   </button>
                 </div>
               </div>
@@ -286,7 +293,7 @@ export default function Warehouses() {
               <form onSubmit={handleAction} className="space-y-4">
                 <div className="flex justify-between items-center pb-3 border-b border-slate-800">
                   <h2 className="text-xl font-black text-white uppercase italic tracking-tight leading-none">
-                    {modalType === 'add' ? 'NEW WAREHOUSE' : modalType === 'put' ? 'FULL SYNC ( PUT )' : 'QUICK PATCH'}
+                    {modalType === 'add' ? (lang === 'ro' ? 'Depozit nou' : 'New warehouse') : modalType === 'put' ? (lang === 'ro' ? 'Sincronizare completă (PUT)' : 'Full sync (PUT)') : (lang === 'ro' ? 'Patch rapid' : 'Quick patch')}
                   </h2>
                   <Warehouse size={20} className="text-amber-500" />
                 </div>
@@ -299,7 +306,9 @@ export default function Warehouses() {
 
                 <div className="space-y-3 font-mono">
                   <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 focus-within:border-amber-500/50 transition-all relative">
-                     <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold">NAME</label>
+                     <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold uppercase">
+                       {lang === 'ro' ? 'Nume' : 'Name'}
+                     </label>
                      <input 
                       disabled={isSubmitting}
                       type="text"
@@ -312,7 +321,9 @@ export default function Warehouses() {
                   </div>
 
                   <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 focus-within:border-amber-500/50 transition-all relative">
-                     <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold">LOCATION</label>
+                     <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold uppercase">
+                       {lang === 'ro' ? 'Locație' : 'Location'}
+                     </label>
                      <input 
                       disabled={isSubmitting}
                       type="text"
@@ -326,13 +337,15 @@ export default function Warehouses() {
                 </div>
 
                 <div className="flex gap-3 pt-3 font-sans">
-                   <button disabled={isSubmitting} type="button" onClick={closeModals} className="flex-1 py-3 text-slate-500 font-black uppercase text-[10px] tracking-widest cursor-pointer hover:text-white transition-colors disabled:opacity-50">Cancel</button>
+                   <button disabled={isSubmitting} type="button" onClick={closeModals} className="flex-1 py-3 text-slate-500 font-black uppercase text-[10px] tracking-widest cursor-pointer hover:text-white transition-colors disabled:opacity-50">
+                     {lang === 'ro' ? 'Anulează' : 'Cancel'}
+                   </button>
                    <button disabled={isSubmitting} type="submit" className={`flex-1 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 ${
                      isSubmitting ? 'bg-slate-800 text-slate-500' :
                      modalType === 'patch' ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400' : 'bg-amber-500 text-slate-950 hover:bg-amber-400'
                    }`}>
                      {isSubmitting && <Loader2 size={12} className="animate-spin" />}
-                     {isSubmitting ? 'PROCESSING...' : 'CONFIRM'}
+                     {isSubmitting ? (lang === 'ro' ? 'SE PROCESEAZĂ...' : 'PROCESSING...') : (lang === 'ro' ? 'CONFIRMĂ' : 'CONFIRM')}
                    </button>
                 </div>
               </form>

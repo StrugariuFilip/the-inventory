@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import * as LucideIcons from 'lucide-react';
+import { Package, Truck, Home, ArrowLeftRight, Menu, X, Globe } from 'lucide-react';
 
-const { Package, Truck, Home, ArrowLeftRight, Menu, X } = LucideIcons;
-
-export default function Navbar({ activeTab, setActiveTab }) {
+export default function Navbar({ activeTab, setActiveTab, lang = 'ro', setLang }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const tabs = [
-    { id: 'warehouses', name: 'WAREHOUSES', icon: Home },
-    { id: 'suppliers', name: 'SUPPLIERS', icon: Truck },
-    { id: 'products', name: 'PRODUCTS', icon: Package },
-    { id: 'stock', name: 'STOCK', icon: ArrowLeftRight },
+    { id: 'warehouses', name: lang === 'ro' ? 'Depozite' : 'Warehouses', icon: Home },
+    { id: 'suppliers', name: lang === 'ro' ? 'Furnizori' : 'Suppliers', icon: Truck },
+    { id: 'products', name: lang === 'ro' ? 'Produse' : 'Products', icon: Package },
+    { id: 'stock', name: lang === 'ro' ? 'Stocuri' : 'Stock', icon: ArrowLeftRight },
   ];
 
   useEffect(() => {
@@ -29,15 +27,21 @@ export default function Navbar({ activeTab, setActiveTab }) {
     </svg>
   );
 
+  const toggleLang = () => {
+    if (setLang) {
+      setLang(lang === 'ro' ? 'en' : 'ro');
+    }
+  };
+
   return (
     <header className="fixed top-0 left-0 w-full z-50 backdrop-blur-md bg-slate-950/80 border-b border-sky-500/10">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 w-full">
+          
           <button 
-            onClick={() => { setActiveTab('intro'); setIsOpen(false);window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            onClick={() => { setActiveTab('intro'); setIsOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
             className="flex items-center space-x-2 sm:space-x-3 group cursor-pointer active:scale-95 transition-all border-none bg-transparent outline-none flex-shrink min-w-0"
           >
-            
             <div className="p-1.5 sm:p-2 bg-gradient-to-tr from-indigo-500 via-sky-400 to-emerald-400 rounded-xl shadow-[0_0_15px_rgba(79,70,229,0.4)] group-hover:rotate-6 transition-all duration-300 shrink-0">
               <Package className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
@@ -68,12 +72,30 @@ export default function Navbar({ activeTab, setActiveTab }) {
                 );
               })}
             </nav>
+
+            <div className="w-px h-8 bg-slate-800 mx-2"></div>
+
+            <button 
+              onClick={toggleLang}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-slate-900/40 border border-sky-500/20 text-xs font-black text-sky-400 hover:border-sky-400 hover:text-white hover:bg-slate-900/80 transition-all cursor-pointer uppercase tracking-widest min-w-[65px] justify-center select-none"
+            >
+              <Globe className="h-3.5 w-3.5 text-sky-400 group-hover:text-white" />
+              <span>{lang === 'ro' ? 'RO' : 'EN'}</span>
+            </button>
+
             <a href="https://github.com/StrugariuFilip/the-inventory" target="_blank" rel="noreferrer" className="relative group block p-2.5 rounded-xl bg-slate-900/40 border border-sky-500/20 hover:border-sky-400 hover:text-white transition-all cursor-pointer">
               <GitHubLogo className="h-5 w-5 text-sky-400 group-hover:text-white" />
             </a>
           </div>
 
-          <div className="xl:hidden flex items-center shrink-0 ml-2">
+          <div className="xl:hidden flex items-center shrink-0 ml-2 gap-3">
+            <button 
+              onClick={toggleLang}
+              className="flex items-center space-x-1.5 hover:cursor-pointer px-2.5 py-1.5 rounded-xl bg-slate-900/40 border border-sky-500/20 text-xs font-black hover:border-sky-400 hover:text-white hover:bg-slate-900/80 transition-all cursor-pointer  text-sky-400 uppercase tracking-wider min-w-[55px] justify-center select-none"
+            >
+              <Globe className="h-3.5 w-3.5 text-sky-400 group-hover:text-white" />
+              <span>{lang === 'ro' ? 'RO' : 'EN'}</span>
+            </button>
             <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-sky-400 hover:text-white transition-colors cursor-pointer">
               {isOpen ? <X size={26} /> : <Menu size={26} />}
             </button>
@@ -96,7 +118,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
             })}
             <a href="https://github.com/StrugariuFilip/the-inventory" target="_blank" rel="noreferrer" className="flex items-center space-x-4 px-6 py-5 rounded-xl bg-slate-900/40 border border-sky-500/10 text-sky-400 font-bold hover:bg-slate-900/80 hover:border-sky-400 transition-all duration-300">
               <GitHubLogo className="h-6 w-6" />
-              <span className="text-base tracking-widest uppercase font-sans">GITHUB REPOSITORY</span>
+              <span className="text-base tracking-widest uppercase font-sans">{lang === 'ro' ? 'Cod sursă (GitHub)' : 'GitHub repository'}</span>
             </a>
           </nav>
         </div>

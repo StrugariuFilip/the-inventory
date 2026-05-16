@@ -6,7 +6,7 @@ import {
   AlertTriangle, CheckCircle2, Mail, Phone, User, Loader2
 } from 'lucide-react';
 
-export default function Suppliers() {
+export default function Suppliers({ lang = 'ro' }) {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,7 +55,7 @@ export default function Suppliers() {
     setIsSubmitting(true);
 
     if (modalType === 'add' && (!formData.name.trim() || !formData.contact_email.trim() || !formData.phone_number.trim())) {
-      setError("All entity credentials (NAME, EMAIL, PHONE) are required.");
+      setError(lang === 'ro' ? "Toate datele entității (Nume, Email, Telefon) sunt obligatorii." : "All entity credentials (Name, Email, Phone) are required.");
       setIsSubmitting(false);
       return;
     }
@@ -65,7 +65,7 @@ export default function Suppliers() {
       const isEmailSame = formData.contact_email.trim() === selectedSupplier.contact_email;
       const isPhoneSame = formData.phone_number.trim() === selectedSupplier.phone_number;
       if (isNameSame || isEmailSame || isPhoneSame) {
-        setError("Both fields must be modified for a Full Sync ( PUT ) operation.");
+        setError(lang === 'ro' ? "Toate câmpurile trebuie modificate pentru o sincronizare completă (PUT)." : "All fields must be modified for a full sync (PUT).");
         setIsSubmitting(false);
         return;
       }
@@ -77,16 +77,16 @@ export default function Suppliers() {
 
       if (modalType === 'add') { 
         await axios.post(API_URL, formData); 
-        actionLabel = "Supplier Registered Successfully!"; 
+        actionLabel = lang === 'ro' ? "Furnizor înregistrat cu succes!" : "Supplier registered successfully!"; 
       } else if (modalType === 'put') { 
         await axios.put(`${API_URL}/${selectedSupplier.id}`, formData); 
-        actionLabel = "FULL SYNC ( PUT ) Complete!"; 
+        actionLabel = lang === 'ro' ? "Sincronizare completă (PUT) finalizată!" : "Full sync (PUT) completed!"; 
       } else if (modalType === 'patch') { 
         await axios.patch(`${API_URL}/${selectedSupplier.id}`, formData); 
-        actionLabel = "Quick Patch Applied!"; 
+        actionLabel = lang === 'ro' ? "Patch rapid aplicat!" : "Quick patch applied!"; 
       } else if (modalType === 'delete') { 
         await axios.delete(`${API_URL}/${selectedSupplier.id}`); 
-        actionLabel = "Supplier Deleted Successfully!"; 
+        actionLabel = lang === 'ro' ? "Furnizor șters cu succes!" : "Supplier deleted successfully!"; 
         currentToastType = 'danger'; 
       }
       
@@ -94,7 +94,7 @@ export default function Suppliers() {
       await fetchSuppliers(); 
       triggerToast(actionLabel, currentToastType);
     } catch (err) { 
-      setError(err.response?.data?.detail || "Transaction Error: Integrity check failed."); 
+      setError(err.response?.data?.detail || (lang === 'ro' ? "Eroare de tranzacție: Verificarea integrității a eșuat." : "Transaction error: Integrity check failed.")); 
     } finally {
       setIsSubmitting(false);
     }
@@ -113,6 +113,8 @@ export default function Suppliers() {
     if (supplier) {
       setSelectedSupplier(supplier);
       setFormData({ name: supplier.name, contact_email: supplier.contact_email, phone_number: supplier.phone_number });
+    } else {
+      setFormData({ name: '', contact_email: '', phone_number: '' });
     }
   };
 
@@ -148,7 +150,7 @@ export default function Suppliers() {
             <Users className="h-8 w-8 text-sky-500" />
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-white italic uppercase tracking-tighter text-center lg:text-left leading-tight whitespace-normal lg:whitespace-nowrap">
-            Supplier Management
+            {lang === 'ro' ? 'Management furnizori' : 'Supplier management'}
           </h2>
         </div>
 
@@ -157,7 +159,7 @@ export default function Suppliers() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-sky-500" />
             <input 
               type="text" 
-              placeholder="FILTER BY ANYTHING.." 
+              placeholder={lang === 'ro' ? 'Caută orice...' : 'Search anything...'}
               className="w-full bg-slate-950/90 border border-sky-500/30 rounded-xl py-3 pl-11 pr-4 text-xs text-white font-mono focus:border-sky-500 outline-none transition-all uppercase placeholder:text-slate-600 shadow-[0_0_15px_rgba(14,165,233,0.05)]" 
               value={searchQuery} 
               onChange={(e) => setSearchQuery(e.target.value)} 
@@ -168,7 +170,9 @@ export default function Suppliers() {
             className="flex items-center justify-center space-x-2 w-full sm:w-auto px-5 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-xs transition-all active:scale-95 shadow-md cursor-pointer shrink-0"
           >
             <Plus className="h-4 w-4 stroke-[3]" />
-            <span className="font-bold tracking-tight">ADD SUPPLIER</span>
+            <span className="font-bold tracking-tight uppercase">
+              {lang === 'ro' ? 'Adaugă furnizor' : 'Add supplier'}
+            </span>
           </button>
         </div>
       </div>
@@ -179,12 +183,16 @@ export default function Suppliers() {
              <Loader2 className="h-16 w-16 text-sky-500 animate-spin stroke-[1.5]" />
              <div className="absolute inset-0 blur-xl bg-sky-500/20 animate-pulse rounded-full" />
            </div>
-           <p className="text-[10px] font-black text-sky-500/60 uppercase tracking-[0.4em] animate-pulse">Synchronizing with Cloud</p>
+           <p className="text-[10px] font-black text-sky-500/60 uppercase tracking-[0.4em] animate-pulse">
+             {lang === 'ro' ? 'Se sincronizează cu cloud-ul' : 'Synchronizing with cloud'}
+           </p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="w-full py-20 bg-slate-900/20 border border-slate-800/80 rounded-3xl flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
            <AlertTriangle className="h-12 w-12 text-slate-600 stroke-[1.5]" />
-           <p className="text-sm font-black text-slate-500 uppercase tracking-widest font-mono">ENTITY NOT FOUND</p>
+           <p className="text-sm font-black text-slate-500 uppercase tracking-widest font-mono">
+             {lang === 'ro' ? 'Nu a fost găsit niciun furnizor' : 'No supplier found'}
+           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -198,15 +206,21 @@ export default function Suppliers() {
                   <div className="flex gap-2">
                     <button disabled={isSubmitting} onClick={() => openModal('put', s)} className="group/btn relative p-2.5 bg-slate-950 text-sky-500 hover:bg-sky-500 hover:text-white rounded-xl border border-slate-800 transition-all cursor-pointer">
                       <Edit size={14}/>
-                      <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-950 text-sky-400 border border-slate-800 rounded text-[9px] font-black uppercase tracking-wider opacity-0 group-hover/btn:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-xl z-20">FULL SYNC ( PUT )</span>
+                      <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-950 text-sky-400 border border-slate-800 rounded text-[9px] font-black uppercase tracking-wider opacity-0 group-hover/btn:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-xl z-20">
+                        {lang === 'ro' ? 'Sincronizare completă (PUT)' : 'Full sync (PUT)'}
+                      </span>
                     </button>
                     <button disabled={isSubmitting} onClick={() => openModal('patch', s)} className="group/btn relative p-2.5 bg-slate-950 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-xl border border-slate-800 transition-all cursor-pointer">
                       <Zap size={14}/>
-                      <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-950 text-emerald-400 border border-slate-800 rounded text-[9px] font-black uppercase tracking-wider opacity-0 group-hover/btn:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-xl z-20">Quick Patch</span>
+                      <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-950 text-emerald-400 border border-slate-800 rounded text-[9px] font-black uppercase tracking-wider opacity-0 group-hover/btn:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-xl z-20">
+                        {lang === 'ro' ? 'Patch rapid' : 'Quick patch'}
+                      </span>
                     </button>
                     <button disabled={isSubmitting} onClick={() => openModal('delete', s)} className="group/btn relative p-2.5 bg-slate-950 text-red-500 hover:bg-red-500 hover:text-white rounded-xl border border-slate-800 transition-all cursor-pointer">
                       <Trash2 size={14}/>
-                      <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-950 text-red-400 border border-slate-800 rounded text-[9px] font-black uppercase tracking-wider opacity-0 group-hover/btn:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-xl z-20">Delete</span>
+                      <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-950 text-red-400 border border-slate-800 rounded text-[9px] font-black uppercase tracking-wider opacity-0 group-hover/btn:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-xl z-20">
+                        {lang === 'ro' ? 'Șterge' : 'Delete'}
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -236,12 +250,16 @@ export default function Suppliers() {
             {modalType === 'delete' ? (
               <div className="text-center space-y-5 py-2">
                 <AlertTriangle className="h-12 w-12 text-red-500 mx-auto animate-pulse" />
-                <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Confirm Deletion?</h2>
+                <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">
+                  {lang === 'ro' ? 'Confirmi ștergerea?' : 'Confirm deletion?'}
+                </h2>
                 <div className="flex gap-3 max-w-xs mx-auto pt-2">
-                  <button disabled={isSubmitting} onClick={closeModals} className="flex-1 py-3 bg-slate-800 text-slate-300 rounded-xl font-black uppercase text-[10px] tracking-widest cursor-pointer disabled:opacity-50">Cancel</button>
+                  <button disabled={isSubmitting} onClick={closeModals} className="flex-1 py-3 bg-slate-800 text-slate-300 rounded-xl font-black uppercase text-[10px] tracking-widest cursor-pointer disabled:opacity-50">
+                    {lang === 'ro' ? 'Anulează' : 'Cancel'}
+                  </button>
                   <button disabled={isSubmitting} onClick={handleAction} className="flex-1 py-3 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest cursor-pointer shadow-lg shadow-red-600/20 disabled:opacity-50 flex items-center justify-center gap-2">
                     {isSubmitting && <Loader2 size={12} className="animate-spin" />}
-                    {isSubmitting ? 'DELETING...' : 'DELETE'}
+                    {isSubmitting ? (lang === 'ro' ? 'SE ȘTERGE...' : 'DELETING...') : (lang === 'ro' ? 'ȘTERGE' : 'DELETE')}
                   </button>
                 </div>
               </div>
@@ -249,7 +267,7 @@ export default function Suppliers() {
               <form onSubmit={handleAction} className="space-y-4">
                 <div className="flex justify-between items-center pb-3 border-b border-slate-800">
                   <h2 className="text-xl font-black text-white uppercase italic tracking-tight leading-none">
-                    {modalType === 'add' ? 'ADD SUPPLIER' : modalType === 'put' ? 'FULL SYNC ( PUT )' : 'QUICK PATCH'}
+                    {modalType === 'add' ? (lang === 'ro' ? 'Furnizor nou' : 'New supplier') : modalType === 'put' ? (lang === 'ro' ? 'Sincronizare completă (PUT)' : 'Full sync (PUT)') : (lang === 'ro' ? 'Patch rapid' : 'Quick patch')}
                   </h2>
                   <Users size={20} className="text-sky-500" />
                 </div>
@@ -260,26 +278,34 @@ export default function Suppliers() {
                 )}
                 <div className="space-y-3 font-mono">
                   <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 focus-within:border-sky-500/50 transition-all relative">
-                    <label className="text-[9px] text-slate-500 block mb-1 font-bold">NAME</label>
+                    <label className="text-[9px] text-slate-500 block mb-1 font-bold uppercase">
+                      {lang === 'ro' ? 'Nume' : 'Name'}
+                    </label>
                     <input disabled={isSubmitting} type="text" maxLength={MAX_NAME} className="w-full bg-transparent border-none text-white font-bold p-0 outline-none text-xs font-sans disabled:opacity-50" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
                     <span className="absolute right-3 top-3 text-[8px] font-mono text-slate-700">{formData.name.length}/{MAX_NAME}</span>
                   </div>
                   <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 focus-within:border-sky-500/50 transition-all relative">
-                    <label className="text-[9px] text-slate-500 block mb-1 font-bold">CONTACT_EMAIL</label>
+                    <label className="text-[9px] text-slate-500 block mb-1 font-bold uppercase">
+                      {lang === 'ro' ? 'Adresă de email' : 'Contact email'}
+                    </label>
                     <input disabled={isSubmitting} type="text" maxLength={MAX_EMAIL} className="w-full bg-transparent border-none text-white font-bold p-0 outline-none text-xs font-sans disabled:opacity-50" value={formData.contact_email} onChange={(e) => setFormData({...formData, contact_email: e.target.value})} />
                     <span className="absolute right-3 top-3 text-[8px] font-mono text-slate-700">{formData.contact_email.length}/{MAX_EMAIL}</span>
                   </div>
                   <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 focus-within:border-sky-500/50 transition-all relative">
-                    <label className="text-[9px] text-slate-500 block mb-1 font-bold">PHONE_NUMBER</label>
+                    <label className="text-[9px] text-slate-500 block mb-1 font-bold uppercase">
+                      {lang === 'ro' ? 'Număr de telefon' : 'Phone number'}
+                    </label>
                     <input disabled={isSubmitting} type="text" className="w-full bg-transparent border-none text-white font-bold p-0 outline-none text-xs font-sans disabled:opacity-50" value={formData.phone_number} onChange={handlePhoneChange} />
                     <span className="absolute right-3 top-3 text-[8px] font-mono text-slate-700">{formData.phone_number.length}/{MAX_PHONE}</span>
                   </div>
                 </div>
                 <div className="flex gap-3 pt-3 font-sans">
-                   <button disabled={isSubmitting} type="button" onClick={closeModals} className="flex-1 py-3 text-slate-500 font-black uppercase text-[10px] tracking-widest cursor-pointer hover:text-white transition-colors disabled:opacity-50">Cancel</button>
+                   <button disabled={isSubmitting} type="button" onClick={closeModals} className="flex-1 py-3 text-slate-500 font-black uppercase text-[10px] tracking-widest cursor-pointer hover:text-white transition-colors disabled:opacity-50">
+                     {lang === 'ro' ? 'Anulează' : 'Cancel'}
+                   </button>
                    <button disabled={isSubmitting} type="submit" className={`flex-1 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 ${isSubmitting ? 'bg-slate-800 text-slate-500' : modalType === 'patch' ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400' : 'bg-sky-500 text-slate-950 hover:bg-sky-400'}`}>
                      {isSubmitting && <Loader2 size={12} className="animate-spin" />}
-                     {isSubmitting ? 'PROCESSING...' : 'CONFIRM'}
+                     {isSubmitting ? (lang === 'ro' ? 'SE PROCESEAZĂ...' : 'PROCESSING...') : (lang === 'ro' ? 'CONFIRMĂ' : 'CONFIRM')}
                    </button>
                 </div>
               </form>

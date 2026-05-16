@@ -3,7 +3,7 @@ import { Package, Code2, FileText } from 'lucide-react';
 import customLogo from '../assets/site.png';
 import assistLogo from '../assets/Assist.png';
 
-export default function Footer() {
+export default function Footer({ lang = 'ro' }) {
   return (
     <footer className="border-t border-slate-900 bg-slate-950 py-10 mt-auto relative selection:bg-pink-500 selection:text-white">
       
@@ -26,7 +26,9 @@ export default function Footer() {
               className="group flex items-center space-x-2 hover:text-white transition-all duration-300"
             >
               <Code2 className="h-5 w-5 text-sky-500 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300" />
-              <span className="group-hover:drop-shadow-[0_0_8px_rgba(14,165,233,0.5)]">Source Code</span>
+              <span className="group-hover:drop-shadow-[0_0_8px_rgba(14,165,233,0.5)]">
+                {lang === 'ro' ? 'Cod sursă' : 'Source code'}
+              </span>
             </a>
           
             <a 
@@ -34,7 +36,7 @@ export default function Footer() {
               target="_blank" 
               rel="noreferrer" 
               className="flex flex-col items-center justify-center space-y-1.5 px-4 py-2.5 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-orange-500/50 hover:bg-gradient-to-b hover:from-slate-900 hover:to-orange-950/20 hover:shadow-[0_0_15px_rgba(249,115,22,0.15)] transition-all duration-300 group cursor-pointer"
-              title="Inspired by ASSIST Software Dashboard"
+              title={lang === 'ro' ? 'Inspirat de ASSIST Software Dashboard' : 'Inspired by ASSIST Software Dashboard'}
             >
               <img 
                 src={assistLogo} 
@@ -42,17 +44,19 @@ export default function Footer() {
                 className="h-5 w-auto object-contain transition-transform duration-300 group-hover:scale-105" 
               />
               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 group-hover:text-orange-400 transition-colors leading-none">
-                Inspired by ASSIST
+                {lang === 'ro' ? 'Inspirat de ASSIST' : 'Inspired by ASSIST'}
               </span>
             </a>
                       
             <a 
-              href="/public/The-Inventory.pdf"
-              download="The-Inventory.pdf"
+              href={lang === 'ro' ? '/public/The-Inventory.pdf' : '/public/The-Inventory-EN.pdf'}
+              download={lang === 'ro' ? 'The-Inventory.pdf' : 'The-Inventory-EN.pdf'}
               className="group flex items-center space-x-2 hover:text-white transition-all duration-300 cursor-pointer"
             >
               <FileText className="h-4 w-4 text-indigo-400 group-hover:-translate-y-1 group-hover:text-indigo-300 transition-all duration-300" />
-              <span className="group-hover:drop-shadow-[0_0_8px_rgba(129,140,248,0.5)]">Documentation</span>
+              <span className="group-hover:drop-shadow-[0_0_8px_rgba(129,140,248,0.5)]">
+                {lang === 'ro' ? 'Documentație' : 'Documentation'}
+              </span>
             </a>
 
           </div>
@@ -71,7 +75,7 @@ export default function Footer() {
                 className="h-5 w-5 object-contain group-hover:scale-110 transition-transform duration-300" 
               />
               <span className="text-sm font-semibold bg-gradient-to-r from-slate-300 to-slate-400 group-hover:from-white group-hover:to-slate-200 bg-clip-text text-transparent transition-all">
-                My Website
+                {lang === 'ro' ? 'Site-ul meu' : 'My website'}
               </span>
             </a>
 
@@ -80,7 +84,7 @@ export default function Footer() {
               target="_blank" 
               rel="noreferrer" 
               className="relative group block p-2.5 rounded-xl transition-all duration-300 hover:scale-110 cursor-pointer text-pink-500 hover:text-pink-400"
-              title="My Instagram"
+              title={lang === 'ro' ? 'Instagram-ul meu' : 'My Instagram'}
             >
               <div className="absolute inset-0 bg-pink-500/0 rounded-xl group-hover:bg-pink-500/10 transition-all duration-300" />
               <svg 
@@ -103,7 +107,7 @@ export default function Footer() {
               target="_blank" 
               rel="noreferrer" 
               className="relative group block p-2.5 rounded-xl bg-slate-900/40 border border-sky-500/20 hover:border-sky-400 hover:shadow-[0_0_12px_rgba(56,189,248,0.15)] transition-all duration-300 hover:scale-110 cursor-pointer"
-              title="My GitHub Profile"
+              title={lang === 'ro' ? 'Profilul meu GitHub' : 'My GitHub profile'}
             >
               <svg 
                 viewBox="0 0 24 24" 
@@ -124,7 +128,7 @@ export default function Footer() {
 
         <div className="pt-8 border-t border-slate-900/80 text-center">
           <p className="text-[10px] text-slate-600 font-mono tracking-widest uppercase">
-            &copy; 2026 Strugariu Filip-Daniel. All rights reserved.
+            &copy; 2026 Strugariu Filip-Daniel. {lang === 'ro' ? 'Toate drepturile rezervate.' : 'All rights reserved.'}
           </p>
         </div>
 
