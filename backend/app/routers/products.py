@@ -9,9 +9,9 @@ router = APIRouter(
     prefix="/api/warehouses/{warehouseId}/products",
     tags=["Product Management"]
 )
+general_router = APIRouter(prefix="/api/warehouses/products", tags=["Product Management"])
 
-
-@router.get("/all", response_model=List[schemas.ProductResponse])
+@general_router.get("/all", response_model=List[schemas.ProductResponse])
 def get_absolutely_all_products(db: Session = Depends(get_db)):
     return db.query(models.Product).all()
 

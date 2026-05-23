@@ -9,6 +9,7 @@ router = APIRouter(
     prefix="/api/warehouses/{warehouseId}/inventory",
     tags=["Stock Management"]
 )
+MAX_QTY = 9999
 
 @router.get("", response_model=List[schemas.InventoryResponse])
 def get_inventory(warehouseId: int, db: Session = Depends(get_db)):
@@ -39,8 +40,8 @@ def get_product_inventory(warehouseId: int, productId: int, db: Session = Depend
 
 @router.post("/{productId}/increase")
 def increase_stock(warehouseId: int, productId: int, req: schemas.StockIncreaseRequest, db: Session = Depends(get_db)):
-    if req.quantity <= 0:
-        raise HTTPException(status_code=400, detail="Increase quantity must be strictly positive.")
+    if req.quantity <= 0 or req.quantity > MAX_QTY:
+        raise HTTPException(status_code=400, detail=f"Quantity must be between 1 and {MAX_QTY}.")
 
     warehouse = db.query(models.Warehouse).filter(models.Warehouse.id == warehouseId).first()
     if not warehouse:
@@ -74,8 +75,8 @@ def increase_stock(warehouseId: int, productId: int, req: schemas.StockIncreaseR
 
 @router.post("/{productId}/decrease")
 def decrease_stock(warehouseId: int, productId: int, req: schemas.StockDecreaseRequest, db: Session = Depends(get_db)):
-    if req.quantity <= 0:
-        raise HTTPException(status_code=400, detail="Decrease quantity must be strictly positive.")
+    if req.quantity <= 0 or req.quantity > MAX_QTY:
+        raise HTTPException(status_code=400, detail=f"Quantity must be between 1 and {MAX_QTY}.")
 
     warehouse = db.query(models.Warehouse).filter(models.Warehouse.id == warehouseId).first()
     if not warehouse:
@@ -94,7 +95,12 @@ def decrease_stock(warehouseId: int, productId: int, req: schemas.StockDecreaseR
             status_code=400, 
             detail=f"Insufficient stock. Available: {product.stockQuantity}, Requested: {req.quantity}."
         )
-        
+    
+    if not req.reason or req.reason.strip() == "":
+        raise HTTPException(
+            status_code=400, 
+            detail="Transaction reason is mandatory."
+        )   
     try:
         product.stockQuantity -= req.quantity
         db.commit()
@@ -103,16 +109,19 @@ def decrease_stock(warehouseId: int, productId: int, req: schemas.StockDecreaseR
         db.rollback()
         raise HTTPException(status_code=500, detail="Internal error occurred while decreasing stock.")
         
+    reason_text = getattr(req, 'reason', 'Nespecificat')
+    
     return {
-        "message": "Stock decreased successfully", 
-        "newStockQuantity": product.stockQuantity
+        "message": f"Stock decreased successfully (Reason: {reason_text})", 
+        "newStockQuantity": product.stockQuantity,
+        "reason": reason_text
     }
 
 
 @router.post("/{productId}/transfer")
 def transfer_stock(warehouseId: int, productId: int, req: schemas.StockTransferRequest, db: Session = Depends(get_db)):
-    if req.quantity <= 0:
-        raise HTTPException(status_code=400, detail="Transfer quantity must be strictly positive.")
+    if req.quantity <= 0 or req.quantity > MAX_QTY:
+        raise HTTPException(status_code=400, detail=f"Quantity must be between 1 and {MAX_QTY}.")
 
     if warehouseId == req.targetWarehouseId:
         raise HTTPException(status_code=400, detail="Source and target warehouses cannot be the same.")
@@ -164,10 +173,13 @@ def transfer_stock(warehouseId: int, productId: int, req: schemas.StockTransferR
         db.rollback()
         raise HTTPException(status_code=500, detail="Internal server error during transfer.")
 
+    reason_text = getattr(req, 'reason', 'Unspecified')
+
     return {
-        "message": "Transfer successful",
+        "message": f"Transfer successful (Motiv: {reason_text})",
         "sourceWarehouseId": warehouseId,
         "targetWarehouseId": req.targetWarehouseId,
         "remainingSourceStock": source_product.stockQuantity,
-        "targetProductId": target_product.id
+        "targetProductId": target_product.id,
+        "reason": reason_text
     }

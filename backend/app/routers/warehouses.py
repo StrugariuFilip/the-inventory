@@ -129,12 +129,16 @@ def delete_warehouse(id: int, db: Session = Depends(get_db)):
     if not warehouse:
         raise HTTPException(status_code=404, detail="Warehouse not found.")
     
+    product_count = db.query(models.Product).filter(models.Product.warehouse_id == id).count()
+    if product_count > 0:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot delete warehouse: {product_count} product(s) are currently assigned to it."
+        )
+    
     try:
         db.delete(warehouse)
         db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(status_code=400, detail="Cannot delete warehouse with existing inventory.")
     except Exception:
         db.rollback()
         raise HTTPException(status_code=500, detail="Internal server error during deletion.")

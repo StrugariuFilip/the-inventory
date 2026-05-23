@@ -49,7 +49,7 @@ export default function Footer({ lang = 'ro' }) {
             </a>
                       
             <a 
-              href={lang === 'ro' ? '/public/The-Inventory.pdf' : '/public/The-Inventory-EN.pdf'}
+              href={lang === 'ro' ? './public/The-Inventory.pdf' : './public/The-Inventory-EN.pdf'}
               download={lang === 'ro' ? 'The-Inventory.pdf' : 'The-Inventory-EN.pdf'}
               className="group flex items-center space-x-2 hover:text-white transition-all duration-300 cursor-pointer"
             >

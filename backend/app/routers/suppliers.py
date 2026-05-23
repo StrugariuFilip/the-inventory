@@ -1,3 +1,4 @@
+import re
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -14,11 +15,22 @@ def validate_supplier_data(name: str = None, email: str = None, phone: str = Non
     if name is not None and len(name.strip()) == 0:
         raise HTTPException(status_code=400, detail="Supplier name cannot be empty.")
     
-    if email is not None and len(email.strip()) == 0:
-        raise HTTPException(status_code=400, detail="Contact email cannot be empty.")
+    if email is not None:
+        if len(email.strip()) == 0:
+            raise HTTPException(status_code=400, detail="Contact email cannot be empty.")
+        if "@" not in email:
+            raise HTTPException(status_code=400, detail="Invalid email format. Missing '@' character.")
             
-    if phone is not None and len(phone.strip()) == 0:
-        raise HTTPException(status_code=400, detail="Phone number cannot be empty.")
+    if phone is not None:
+        cleaned_phone = phone.strip()
+        if len(cleaned_phone) == 0:
+            raise HTTPException(status_code=400, detail="Phone number cannot be empty.")[cite: 9]
+        
+        if not re.match(r"^\+?\d{10,}$", cleaned_phone):
+            raise HTTPException(
+                status_code=400, 
+                detail="Invalid phone number format. Only digits allowed, optionally starting with a single '+' and minimum 10 digits total."
+            )
 
 
 @router.post("", response_model=schemas.SupplierResponse, status_code=201)
@@ -152,14 +164,18 @@ def delete_supplier(id: int, db: Session = Depends(get_db)):
     if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found.")
     
+    product_count = db.query(models.Product).filter(models.Product.supplier_id == id).count()
+    if product_count > 0:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot delete supplier: {product_count} product(s) are currently assigned to it."
+        )
+    
     try:
         db.delete(supplier)
         db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(status_code=400, detail="Cannot delete supplier: linked products detected.")
     except Exception:
         db.rollback()
         raise HTTPException(status_code=500, detail="Internal server error during deletion.")
         
-    return None
+    return {"message": "Supplier deleted successfully"}

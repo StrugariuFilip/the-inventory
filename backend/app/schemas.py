@@ -71,10 +71,12 @@ class StockIncreaseRequest(BaseModel):
 
 class StockDecreaseRequest(BaseModel):
     quantity: int
+    reason: str = None
 
 class StockTransferRequest(BaseModel):
     quantity: int
     targetWarehouseId: int
+    reason: str = None
 
 
 class InventoryResponse(BaseModel):

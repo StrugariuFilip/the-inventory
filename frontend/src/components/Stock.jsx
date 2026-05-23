@@ -15,6 +15,7 @@ export default function Stock({ lang = 'ro' }) {
   const [selectedProductId, setSelectedProductId] = useState('');
   const [targetWarehouseId, setTargetWarehouseId] = useState('');
   const [transferQuantity, setTransferQuantity] = useState('');
+  const [reason, setReason] = useState('');
   const [isSourceWareOpen, setIsSourceWareOpen] = useState(false);
   const [isProductOpen, setIsProductOpen] = useState(false);
   const [isTargetWareOpen, setIsTargetWareOpen] = useState(false);
@@ -53,12 +54,15 @@ export default function Stock({ lang = 'ro' }) {
   const handleQuickAdd = (amount) => {
     if (!currentProduct) return;
     if (amount === 'MAX') {
-      setTransferQuantity(currentProduct.stockQuantity.toString());
+      const val = Math.min(currentProduct.stockQuantity, 9999);
+      setTransferQuantity(val.toString());
       return;
     }
     const currentQty = transferQuantity === '' ? 0 : parseInt(transferQuantity, 10);
     const newQty = currentQty + amount;
-    if ((mode === 'transfer' || mode === 'decrease') && newQty > currentProduct.stockQuantity) {
+    if (newQty > 9999) {
+      setTransferQuantity("9999");
+    }else if ((mode === 'transfer' || mode === 'decrease') && newQty > currentProduct.stockQuantity) {
       setTransferQuantity(currentProduct.stockQuantity.toString());
     } else {
       setTransferQuantity(newQty.toString());
@@ -79,12 +83,19 @@ export default function Stock({ lang = 'ro' }) {
       return;
     }
 
-    const qty = parseInt(transferQuantity, 10);
-    if (isNaN(qty) || qty <= 0) {
-      setError(lang === 'ro' ? "Cantitatea trebuie să fie un număr pozitiv." : "Quantity must be a positive integer.");
+    if ((mode === 'transfer' || mode === 'decrease') && !reason.trim()) {
+      setError(lang === 'ro' ? "Motivul este obligatoriu pentru această operațiune." : "A reason is required for this operation.");
       return;
     }
 
+    const qty = parseInt(transferQuantity, 10);
+    if (isNaN(qty) || qty <= 0 || qty > 9999) {
+      setError(lang === 'ro' 
+        ? "Cantitatea trebuie să fie între 1 și 9999." 
+        : "Quantity must be between 1 and 9999.");
+      return;
+    }
+    
     if ((mode === 'transfer' || mode === 'decrease') && qty > currentProduct?.stockQuantity) {
       setError(lang === 'ro' ? `Stoc insuficient. Volum disponibil: ${currentProduct.stockQuantity}` : `Insufficient stock. Available volume: ${currentProduct.stockQuantity}`);
       return;
@@ -102,21 +113,37 @@ export default function Stock({ lang = 'ro' }) {
 
       if (mode === 'transfer') {
         url = `${baseUrl}/transfer`;
-        payload = { quantity: qty, targetWarehouseId: parseInt(targetWarehouseId, 10) };
+        payload = { quantity: qty, targetWarehouseId: parseInt(targetWarehouseId, 10), reason: reason.trim() };
         successLabel = lang === 'ro' ? `TRANSFER REUȘIT: ${qty}x ${currentProduct.name}` : `TRANSFER SUCCESSFUL: ${qty}x ${currentProduct.name}`;
+        setTransferQuantity('');
+        setReason('');
+        setSelectedProductId(''); 
+        const res = await axios.get(`${API_BASE}/warehouses/${sourceWarehouseId}/products`);
+        setSourceProducts(res.data);
       } else if (mode === 'increase') {
         url = `${baseUrl}/increase`;
         payload = { quantity: qty, supplierId: currentProduct.supplier_id };
         successLabel = lang === 'ro' ? `STOC SUPLIMENTAT: +${qty}x ${currentProduct.name}` : `STOCK INCREASED: +${qty}x ${currentProduct.name}`;
+        setTransferQuantity('');
+        setReason('');
+        setSelectedProductId(''); 
+        const res = await axios.get(`${API_BASE}/warehouses/${sourceWarehouseId}/products`);
+        setSourceProducts(res.data);
       } else if (mode === 'decrease') {
         url = `${baseUrl}/decrease`;
-        payload = { quantity: qty };
+        payload = { quantity: qty, reason: reason.trim() };
         successLabel = lang === 'ro' ? `STOC SCĂZUT: -${qty}x ${currentProduct.name}` : `STOCK DEDUCTED: -${qty}x ${currentProduct.name}`;
+        setTransferQuantity('');
+        setReason('');
+        setSelectedProductId(''); 
+        const res = await axios.get(`${API_BASE}/warehouses/${sourceWarehouseId}/products`);
+        setSourceProducts(res.data);
       }
 
       await axios.post(url, payload);
       triggerToast(successLabel);
       setTransferQuantity('');
+      setReason('');
       const res = await axios.get(`${API_BASE}/warehouses/${sourceWarehouseId}/products`);
       setSourceProducts(res.data);
     } catch (err) {
@@ -172,7 +199,7 @@ export default function Stock({ lang = 'ro' }) {
                 <button 
                   key={t.id} 
                   type="button" 
-                  onClick={() => { if(!isSubmitting){setMode(t.id); setTransferQuantity(''); setError('');} }} 
+                  onClick={() => { if(!isSubmitting){setMode(t.id); setTransferQuantity(''); setReason(''); setError('');} }} 
                   className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-black text-[9px] sm:text-[10px] tracking-widest uppercase transition-all cursor-pointer whitespace-nowrap ${active ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-md' : 'text-slate-500 hover:text-slate-300'}`}
                 >
                   <Icon size={12} className={active ? 'text-indigo-400' : 'text-slate-600'} />
@@ -210,9 +237,32 @@ export default function Stock({ lang = 'ro' }) {
                 <span className="truncate">{currentProduct ? `${currentProduct.name} (SKU: ${currentProduct.sku})` : sourceProducts.length === 0 ? (lang === 'ro' ? 'NU EXISTĂ ACTIVE' : 'NO ASSETS AVAILABLE') : (lang === 'ro' ? 'ALEGE PRODUSUL' : 'CHOOSE PRODUCT')}</span>
                 <ChevronDown size={14} className={`text-slate-500 transition-transform ${isProductOpen ? 'rotate-180 text-indigo-500' : ''}`} />
               </button>
-              {isProductOpen && sourceProducts.length > 0 && (
-                <><div className="fixed inset-0 z-30" onClick={() => setIsProductOpen(false)} /><div className="absolute left-0 right-0 mt-2 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl overflow-hidden z-40 max-h-48 overflow-y-auto text-[10px]">{sourceProducts.map(p => (<div key={p.id} onClick={() => { setSelectedProductId(p.id); setTransferQuantity(''); setIsProductOpen(false); }} className={`px-3 py-2 cursor-pointer flex justify-between items-center border-b border-slate-900/50 last:border-none font-sans ${selectedProductId.toString() === p.id.toString() ? 'bg-indigo-500/10' : 'hover:bg-slate-900'}`}><span className="truncate font-bold text-white uppercase">{p.name}</span><span className="text-[9px] font-mono text-indigo-400 font-bold shrink-0">{lang === 'ro' ? 'CANT:' : 'QTY:'} {p.stockQuantity}</span></div>))}</div></>
-              )}
+                {isProductOpen && sourceProducts.length > 0 && (
+              <div className="absolute left-0 right-0 mt-2 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl overflow-hidden z-40 max-h-48 overflow-y-auto text-[10px]">
+                {sourceProducts.map(p => {
+                  const isIndisponibil = (mode === 'transfer' || mode === 'decrease') && p.stockQuantity <= 0;
+                  
+                  return (
+                    <div 
+                      key={p.id} 
+                      onClick={() => { 
+                        if (isIndisponibil) return; 
+                        setSelectedProductId(p.id); 
+                        setTransferQuantity(''); 
+                        setIsProductOpen(false); 
+                      }} 
+                      className={`px-3 py-2.5 cursor-pointer flex justify-between items-center border-b border-slate-900/50 last:border-none font-sans 
+                      ${isIndisponibil ? 'opacity-30 cursor-not-allowed bg-slate-950' : (selectedProductId.toString() === p.id.toString() ? 'bg-indigo-500/10' : 'hover:bg-slate-900')}`}
+                    >
+                      <span className="truncate font-bold text-white uppercase">{p.name}</span>
+                      <span className="text-[9px] font-mono text-indigo-400 font-bold shrink-0">
+                        {lang === 'ro' ? 'CANT:' : 'QTY:'} {p.stockQuantity}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             </div>
           </div>
           <div className="mt-6 pt-5 border-t border-slate-800/60 bg-slate-950/60 p-4 rounded-2xl border border-slate-800/40 text-center">
@@ -228,7 +278,7 @@ export default function Stock({ lang = 'ro' }) {
             <div className="w-full text-center">
               <label className="text-[9px] text-slate-500 block mb-2 font-bold tracking-wider font-mono uppercase">{lang === 'ro' ? 'INTRODUCEȚI CANTITATEA' : 'ENTER AMOUNT'}</label>
               <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 focus-within:border-emerald-500/50 transition-all max-w-xs mx-auto">
-                <input disabled={isSubmitting} type="number" placeholder="0" className="w-full bg-transparent text-center text-4xl font-black font-mono text-white outline-none no-spinner placeholder:text-slate-800 disabled:opacity-50" value={transferQuantity} onChange={(e) => setTransferQuantity(e.target.value)} />
+                <input disabled={isSubmitting} type="number" placeholder="0" className="w-full bg-transparent text-center text-4xl font-black font-mono text-white outline-none no-spinner placeholder:text-slate-800 disabled:opacity-50" value={transferQuantity} onChange={(e) => { if (e.target.value.length <= 4) { setTransferQuantity(e.target.value); } }} />
               </div>
             </div>
             <div className="w-full max-w-xs">
@@ -259,6 +309,10 @@ export default function Stock({ lang = 'ro' }) {
                   <><div className="fixed inset-0 z-30" onClick={() => setIsTargetWareOpen(false)} /><div className="absolute left-0 right-0 mt-2 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl overflow-hidden z-40 max-h-40 overflow-y-auto text-[10px]">{warehouses.map(w => { const isDisabled = w.id.toString() === sourceWarehouseId.toString(); return (<div key={w.id} onClick={() => { if(isDisabled) return; setTargetWarehouseId(w.id); setIsTargetWareOpen(false); }} className={`px-3 py-2.5 flex items-center justify-between border-b border-slate-900/50 last:border-none font-sans ${isDisabled ? 'opacity-30 cursor-not-allowed text-slate-600' : 'cursor-pointer text-slate-300 hover:bg-slate-900'}`}><span className="truncate">ID: {w.id} — {w.name}</span></div>); })}</div></>
                 )}
               </div>
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 relative">
+                <label className="text-[9px] text-slate-500 block mb-1 font-bold tracking-wider font-mono uppercase">{lang === 'ro' ? 'MOTIV TRANSFER' : 'TRANSFER REASON'} <span className="text-emerald-500">*</span></label>
+                <input disabled={isSubmitting} type="text" placeholder={lang === 'ro' ? 'Ex: Reajustare stoc' : 'Ex: Stock readjustment'} className="w-full bg-transparent text-white font-bold text-xs outline-none font-sans disabled:opacity-50" value={reason} onChange={(e) => setReason(e.target.value)} />
+              </div>
             </div>
           ) : (
             <div className="flex flex-col justify-center h-full space-y-4 my-auto text-center">
@@ -269,6 +323,12 @@ export default function Stock({ lang = 'ro' }) {
                 <div className="text-left"><span className="text-[8px] text-indigo-400 block uppercase font-mono font-bold">{lang === 'ro' ? 'CALCULAT' : 'CALCULATED'}</span><span className={`text-xl font-black font-mono ${mode === 'increase' ? 'text-emerald-400' : 'text-amber-400'}`}>{calculatedStock}</span></div>
               </div>
               <p className="text-[10px] text-slate-500 italic">{mode === 'increase' ? (lang === 'ro' ? 'Unitățile vor fi adăugate la unitatea sursă.' : 'Units will be added to source facility.') : (lang === 'ro' ? 'Unitățile vor fi scăzute definitiv.' : 'Units will be deducted permanently.')}</p>
+              {mode === 'decrease' && (
+                <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 relative text-left mt-2">
+                  <label className="text-[9px] text-slate-500 block mb-1 font-bold tracking-wider font-mono uppercase">{lang === 'ro' ? 'MOTIV SCĂDERE' : 'DECREASE REASON'} <span className="text-emerald-500">*</span></label>
+                  <input disabled={isSubmitting} type="text" placeholder={lang === 'ro' ? 'Ex: Produs deteriorat' : 'Ex: Damaged product'} className="w-full bg-transparent text-white font-bold text-xs outline-none font-sans disabled:opacity-50" value={reason} onChange={(e) => setReason(e.target.value)} />
+                </div>
+              )}
             </div>
           )}
           <div className="mt-auto pt-6">

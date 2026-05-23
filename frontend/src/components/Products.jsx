@@ -34,6 +34,47 @@ export default function Products({ lang = 'ro' }) {
   const MAX_DESC = 150;
   const MAX_PRICE_LEN = 10;
   const MAX_STOCK_LEN = 8;
+  
+  const isFormValid = () => {
+    const isNum = (val) => val !== '' && !isNaN(val) && isFinite(val);
+    
+    if (modalType === 'add') {
+      return (
+        formData.name.trim().length > 0 &&
+        formData.sku.trim().length > 0 &&
+        formData.description.trim().length > 0 &&
+        formData.category.trim().length > 0 &&
+        isNum(formData.price) &&
+        isNum(formData.stockQuantity) &&
+        formData.supplier_id !== '' &&
+        formData.warehouse_id !== ''
+      );
+    }
+    if (modalType === 'put') {
+      const isNameSame = formData.name.trim() === selectedProduct?.name;
+      const isDescSame = formData.description.trim() === (selectedProduct?.description || '');
+      const isSkuSame = formData.sku.trim() === selectedProduct?.sku;
+      const isCatSame = formData.category.trim() === (selectedProduct?.category || '');
+      const isPriceSame = Number(formData.price) === Number(selectedProduct?.price);
+      const isSuppSame = Number(formData.supplier_id) === Number(selectedProduct?.supplier_id);
+      
+      const isBothNotEmpty = formData.name.trim().length > 0 && formData.sku.trim().length > 0 && formData.category.trim().length > 0 && formData.description.trim().length > 0 && isNum(formData.price);
+      return (!isNameSame && !isDescSame && !isSkuSame && !isCatSame && !isPriceSame && !isSuppSame) && isBothNotEmpty;
+    }
+    if (modalType === 'patch') {
+      const isChanged = 
+        formData.name.trim() !== selectedProduct?.name ||
+        formData.sku.trim() !== selectedProduct?.sku ||
+        formData.description.trim() !== (selectedProduct?.description || '') ||
+        formData.category.trim() !== (selectedProduct?.category || '') ||
+        Number(formData.price) !== Number(selectedProduct?.price) ||
+        Number(formData.supplier_id) !== Number(selectedProduct?.supplier_id);
+      
+      const isNotEmpty = formData.name.trim() !== "" || formData.sku.trim() !== "" || formData.category.trim() !== "" || isNum(formData.price);
+      return isChanged && isNotEmpty;
+    }
+    return true;
+  };
 
   const fetchData = async () => {
     try {
@@ -72,37 +113,9 @@ export default function Products({ lang = 'ro' }) {
 
   const handleAction = async (e) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || (modalType !== 'delete' && !isFormValid())) return;
     setError('');
     setIsSubmitting(true);
-
-    if (modalType === 'add') {
-      const { name, sku, description, category, price, stockQuantity, supplier_id, warehouse_id } = formData;
-      if (!name.trim() || !sku.trim() || !description.trim() || !category.trim() || price === '' || stockQuantity === '') {
-        setError(lang === 'ro' ? "Toate câmpurile trebuie completate." : "All fields must be completed.");
-        setIsSubmitting(false);
-        return;
-      }
-      if (!supplier_id || !warehouse_id) {
-        setError(lang === 'ro' ? "Selectarea furnizorului și a depozitului este obligatorie." : "Supplier and Warehouse selections are required.");
-        setIsSubmitting(false);
-        return;
-      }
-    }
-
-    if (modalType === 'put') {
-      const isNameSame = formData.name.trim() === selectedProduct.name;
-      const isDescSame = formData.description.trim() === (selectedProduct.description || '');
-      const isSkuSame = formData.sku.trim() === selectedProduct.sku;
-      const isCatSame = formData.category.trim() === (selectedProduct.category || '');
-      const isPriceSame = Number(formData.price) === Number(selectedProduct.price);
-      const isSuppSame = Number(formData.supplier_id) === Number(selectedProduct.supplier_id);
-      if (isNameSame && isDescSame && isSkuSame && isCatSame && isPriceSame && isSuppSame) {
-        setError(lang === 'ro' ? "Toate câmpurile trebuie modificate pentru o sincronizare completă (PUT)." : "All fields must be modified for a full sync (PUT).");
-        setIsSubmitting(false);
-        return;
-      }
-    }
 
     try {
       const targetWarehouseId = modalType === 'add' ? formData.warehouse_id : selectedProduct.warehouse_id;
@@ -116,7 +129,7 @@ export default function Products({ lang = 'ro' }) {
       } else if (modalType === 'put') { 
         const { stockQuantity, ...putData } = formData;
         await axios.put(`${url}/${selectedProduct.id}`, putData); 
-        actionLabel = lang === 'ro' ? "Sincronizare completă (PUT) finalizată!" : "Full sync (PUT) completed!"; 
+        actionLabel = lang === 'ro' ? "Sincronizare completă ( PUT ) finalizată!" : "Full sync ( PUT ) completed!"; 
       } else if (modalType === 'patch') { 
         const patchData = {};
         if (formData.name.trim() !== selectedProduct.name) patchData.name = formData.name;
@@ -126,11 +139,6 @@ export default function Products({ lang = 'ro' }) {
         if (Number(formData.price) !== Number(selectedProduct.price)) patchData.price = Number(formData.price);
         if (Number(formData.supplier_id) !== Number(selectedProduct.supplier_id)) patchData.supplier_id = Number(formData.supplier_id);
 
-        if (Object.keys(patchData).length === 0) {
-          setError(lang === 'ro' ? "Nu s-au detectat modificări pentru patch rapid." : "No changes detected for quick patch.");
-          setIsSubmitting(false);
-          return;
-        }
         await axios.patch(`${url}/${selectedProduct.id}`, patchData); 
         actionLabel = lang === 'ro' ? "Patch rapid aplicat!" : "Quick patch applied!"; 
       } else if (modalType === 'delete') { 
@@ -141,7 +149,12 @@ export default function Products({ lang = 'ro' }) {
       
       closeModals(); await fetchData(); triggerToast(actionLabel, currentToastType);
     } catch (err) { 
-      setError(err.response?.data?.detail || (lang === 'ro' ? "Tranzacție întreruptă. Verifică constrângerile bazei de date." : "Transaction interrupted. Verify database constraints.")); 
+      const msg = err.response?.data?.detail || "";
+      if (msg.toLowerCase().includes("sku")) {
+        setError(lang === 'ro' ? "Eroare: Acest SKU există deja în baza de date." : "Error: This SKU already exists in the database." );
+      } else {
+        setError(lang === 'ro' ? "Tranzacție întreruptă. Verifică constrângerile bazei de date." : "Transaction interrupted. Verify database constraints."); 
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -185,7 +198,6 @@ export default function Products({ lang = 'ro' }) {
   const currentFilterName = selectedFilterNode ? warehouses.find(w => w.id.toString() === selectedFilterNode.toString())?.name || (lang === 'ro' ? 'NOD' : 'NODE') : (lang === 'ro' ? 'AFIȘEAZĂ TOT' : 'DISPLAY ALL');
   const currentFormSupplierName = formData.supplier_id ? suppliers.find(s => s.id.toString() === formData.supplier_id.toString())?.name || '' : '';
   const currentFormWarehouseName = formData.warehouse_id ? warehouses.find(w => w.id.toString() === formData.warehouse_id.toString())?.name || '' : '';
-
   return (
     <div className="animate-fade-in space-y-8 relative pb-16 text-white font-sans">
       {showToast && ReactDOM.createPortal(
@@ -222,8 +234,15 @@ export default function Products({ lang = 'ro' }) {
                 <div className="fixed inset-0 z-30" onClick={() => setIsFilterOpen(false)} />
                 <div className="absolute right-0 mt-2 w-56 bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-40 animate-in fade-in-50">
                   <div className="p-1.5 max-h-60 overflow-y-auto custom-scrollbar font-mono text-[10px] uppercase">
-                    <div onClick={() => { setSelectedFilterNode(''); setIsFilterOpen(false); }} className={`px-3 py-2.5 rounded-xl cursor-pointer transition-all flex items-center justify-between ${!selectedFilterNode ? 'bg-emerald-500/10 text-emerald-400 font-black' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}><span>{lang === 'ro' ? 'Afișează tot' : 'Display all'}</span>{!selectedFilterNode && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />}</div>
-                    <div className="h-[1px] bg-slate-800/50 my-1 mx-2" />
+                    <div onClick={() => { setSelectedFilterNode(''); setIsFilterOpen(false); }} className={`px-3 py-2.5 rounded-xl cursor-pointer transition-all flex items-center justify-between ${!selectedFilterNode ? 'bg-emerald-500/10 text-emerald-400 font-black' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}>
+                      <span>{lang === 'ro' ? 'Afișează tot' : 'Display all'}</span>
+                      {!selectedFilterNode && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />}
+                    </div>
+                    
+                    <div className="px-3 py-1 text-[8px] font-black tracking-wider text-slate-600 block bg-slate-900/40 rounded-lg my-1.5 font-sans">
+                      {lang === 'ro' ? '— Depozite disponibile —' : '— Available warehouses —'}
+                    </div>
+
                     {warehouses.map(w => (<div key={w.id} onClick={() => { setSelectedFilterNode(w.id); setIsFilterOpen(false); }} className={`px-3 py-2.5 rounded-xl cursor-pointer transition-all flex items-center justify-between mt-0.5 ${selectedFilterNode.toString() === w.id.toString() ? 'bg-emerald-500/10 text-emerald-400 font-black' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}><span className="truncate">{w.name}</span>{selectedFilterNode.toString() === w.id.toString() && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />}</div>))}
                   </div>
                 </div>
@@ -262,35 +281,62 @@ export default function Products({ lang = 'ro' }) {
         <div className="w-full py-20 bg-slate-900/20 border border-slate-800/80 rounded-3xl flex flex-col items-center justify-center gap-3 backdrop-blur-sm"><Package className="h-12 w-12 text-slate-600 stroke-[1.5]" /><p className="text-sm font-black text-slate-500 uppercase tracking-widest font-mono">{lang === 'ro' ? 'Nu a fost găsit niciun produs' : 'No products found'}</p></div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filtered.map((p) => (
-            <div key={p.id} className="group relative bg-slate-900/40 border border-slate-800 rounded-3xl p-6 hover:border-emerald-500/40 transition-all duration-300 backdrop-blur-sm shadow-xl flex flex-col justify-between min-h-[350px] hover:scale-[1.03] hover:shadow-2xl hover:shadow-emerald-500/5">
-              <div className="relative z-10">
-                <div className="flex justify-between items-start mb-6">
-                  <div className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl font-mono text-[10px] text-emerald-400 uppercase font-black tracking-widest shadow-inner">{p.category || (lang === 'ro' ? 'ACTIV' : 'ASSET')}</div>  
-                  <div className="flex gap-2">
-                    <button disabled={isSubmitting} onClick={() => openModal('put', p)} className="group/btn relative p-2.5 bg-slate-950 text-sky-500 hover:bg-sky-500 hover:text-white rounded-xl border border-slate-800 transition-all cursor-pointer"><Edit size={14}/><span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-950 text-sky-400 border border-slate-800 rounded text-[9px] font-black uppercase tracking-wider opacity-0 group-hover/btn:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-xl z-20">{lang === 'ro' ? 'Sincronizare completă (PUT)' : 'Full sync (PUT)'}</span></button>
-                    <button disabled={isSubmitting} onClick={() => openModal('patch', p)} className="group/btn relative p-2.5 bg-slate-950 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-xl border border-slate-800 transition-all cursor-pointer"><Zap size={14}/><span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-950 text-emerald-400 border border-slate-800 rounded text-[9px] font-black uppercase tracking-wider opacity-0 group-hover/btn:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-xl z-20">{lang === 'ro' ? 'Patch rapid' : 'Quick patch'}</span></button>
-                    <button disabled={isSubmitting} onClick={() => openModal('delete', p)} className="group/btn relative p-2.5 bg-slate-950 text-red-500 hover:bg-red-500 hover:text-white rounded-xl border border-slate-800 transition-all cursor-pointer"><Trash2 size={14}/><span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-950 text-red-400 border border-slate-800 rounded text-[9px] font-black uppercase tracking-wider opacity-0 group-hover/btn:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-xl z-20">{lang === 'ro' ? 'Șterge' : 'Delete'}</span></button>
+          {filtered.map((p) => {
+            const isOutofStock = Number(p.stockQuantity) === 0;
+            return (
+              <div 
+                key={p.id} 
+                className={`group relative border rounded-3xl p-6 transition-all duration-300 backdrop-blur-sm shadow-xl flex flex-col justify-between min-h-[350px] hover:scale-[1.03] hover:shadow-2xl ${
+                  isOutofStock 
+                    ? 'bg-red-950/20 border-red-500/30 hover:border-red-500/60 hover:shadow-red-500/5' 
+                    : 'bg-slate-900/40 border-slate-800 hover:border-emerald-500/40 hover:shadow-emerald-500/5'
+                }`}
+              >
+                <div className="relative z-10">
+                  <div className="flex justify-between items-start mb-6">
+                    <div className={`px-3 py-1.5 border rounded-xl font-mono text-[10px] uppercase font-black tracking-widest shadow-inner ${
+                      isOutofStock ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                    }`}>
+                      {p.category || (lang === 'ro' ? 'ACTIV' : 'ASSET')}
+                    </div>  
+                    <div className="flex gap-2">
+                      <button disabled={isSubmitting} onClick={() => openModal('put', p)} className="group/btn relative p-2.5 bg-slate-950 text-sky-500 hover:bg-sky-500 hover:text-white rounded-xl border border-slate-800 transition-all cursor-pointer"><Edit size={14}/><span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-950 text-sky-400 border border-slate-800 rounded text-[9px] font-black uppercase tracking-wider opacity-0 group-hover/btn:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-xl z-20">{lang === 'ro' ? 'Sincronizare completă ( PUT )' : 'Full sync ( PUT )'}</span></button>
+                      <button disabled={isSubmitting} onClick={() => openModal('patch', p)} className="group/btn relative p-2.5 bg-slate-950 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-xl border border-slate-800 transition-all cursor-pointer"><Zap size={14}/><span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-950 text-emerald-400 border border-slate-800 rounded text-[9px] font-black uppercase tracking-wider opacity-0 group-hover/btn:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-xl z-20">{lang === 'ro' ? 'Patch rapid' : 'Quick patch'}</span></button>
+                      <button disabled={isSubmitting} onClick={() => openModal('delete', p)} className="group/btn relative p-2.5 bg-slate-950 text-red-500 hover:bg-red-500 hover:text-white rounded-xl border border-slate-800 transition-all cursor-pointer"><Trash2 size={14}/><span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-950 text-red-400 border border-slate-800 rounded text-[9px] font-black uppercase tracking-wider opacity-0 group-hover/btn:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-xl z-20">{lang === 'ro' ? 'Șterge' : 'Delete'}</span></button>
+                    </div>
+                  </div>
+                  <h3 className={`text-3xl font-black uppercase italic tracking-tighter mb-2 transition-colors leading-[0.9] break-words line-clamp-2 min-h-[4.5rem] ${
+                    isOutofStock ? 'group-hover:text-red-400' : 'group-hover:text-emerald-400'
+                  }`}>{p.name}</h3>
+                  <div className="flex items-center gap-1 text-[10px] font-mono text-slate-500 tracking-widest uppercase mb-2"><Tag size={10} className={isOutofStock ? 'text-red-600' : 'text-emerald-600'} /> SKU: {p.sku}</div>
+                  <p className="text-xs text-slate-400/90 italic line-clamp-2 mb-4 h-8 leading-tight font-medium break-words">{p.description || (lang === 'ro' ? 'Nu a fost oferită o descriere.' : 'No system description provided.')}</p>
+                  <div className="mb-5 bg-slate-950/60 px-3 py-2 rounded-xl border border-slate-800/60 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-300 font-bold truncate"><User size={12} className={isOutofStock ? 'text-red-500' : 'text-emerald-500'} /><span className="truncate uppercase line-clamp-1 break-all">{suppliers.find(s => s.id === p.supplier_id)?.name || (lang === 'ro' ? 'NEVERIFICAT' : 'UNVERIFIED')}</span></div>
+                    <div className={`flex items-center border rounded-lg px-2 py-0.5 shrink-0 ${isOutofStock ? 'bg-red-500/10 border-red-500/20' : 'bg-emerald-500/10 border-emerald-500/20'}`}><span className={`font-mono text-[9px] font-black tracking-widest leading-none ${isOutofStock ? 'text-red-400' : 'text-emerald-400'}`}>ID-{p.supplier_id}</span></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800/80"><span className="text-[8px] text-slate-600 block uppercase font-black tracking-widest mb-0.5">{lang === 'ro' ? 'Valoare piață' : 'Market value'}</span><span className="text-lg font-black text-white leading-none">${p.price}</span></div>
+                    <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800/80">
+                      <span className="text-[8px] text-slate-600 block uppercase font-black tracking-widest mb-0.5">{lang === 'ro' ? 'Volum stoc' : 'Stock volume'}</span>
+                      <span className={`text-lg font-black leading-none flex flex-wrap items-center gap-1.5 ${isOutofStock ? 'text-red-500' : 'text-white'}`}>
+                        <Box size={12} className={isOutofStock ? 'text-red-500' : 'text-emerald-500'} /> 
+                        {p.stockQuantity}
+                        {isOutofStock && (
+                          <span className="text-[7px] font-bold tracking-tight uppercase bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20 block animate-pulse">
+                            {lang === 'ro' ? 'Epuizat' : 'OOS'}
+                          </span>
+                        )}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <h3 className="text-3xl font-black uppercase italic tracking-tighter mb-2 group-hover:text-emerald-400 transition-colors leading-[0.9] break-words line-clamp-2 min-h-[4.5rem]">{p.name}</h3>
-                <div className="flex items-center gap-1 text-[10px] font-mono text-slate-500 tracking-widest uppercase mb-2"><Tag size={10} className="text-emerald-600" /> SKU: {p.sku}</div>
-                <p className="text-xs text-slate-400/90 italic line-clamp-2 mb-4 h-8 leading-tight font-medium break-words">{p.description || (lang === 'ro' ? 'Nu a fost oferită o descriere.' : 'No system description provided.')}</p>
-                <div className="mb-5 bg-slate-950/60 px-3 py-2 rounded-xl border border-slate-800/60 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 text-[11px] text-slate-300 font-bold truncate"><User size={12} className="text-emerald-500 shrink-0" /><span className="truncate uppercase line-clamp-1 break-all">{suppliers.find(s => s.id === p.supplier_id)?.name || (lang === 'ro' ? 'NEVERIFICAT' : 'UNVERIFIED')}</span></div>
-                  <div className="flex items-center bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-0.5 shrink-0"><span className="font-mono text-[9px] text-emerald-400 font-black tracking-widest leading-none">ID-{p.supplier_id}</span></div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800/80"><span className="text-[8px] text-slate-600 block uppercase font-black tracking-widest mb-0.5">{lang === 'ro' ? 'Valoare piață' : 'Market value'}</span><span className="text-lg font-black text-white leading-none">${p.price}</span></div>
-                  <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800/80"><span className="text-[8px] text-slate-600 block uppercase font-black tracking-widest mb-0.5">{lang === 'ro' ? 'Volum stoc' : 'Stock volume'}</span><span className="text-lg font-black text-white leading-none flex items-center gap-1"><Box size={12} className="text-emerald-500" /> {p.stockQuantity}</span></div>
+                <div className="relative z-10 pt-5 border-t border-slate-800/50 flex items-center justify-between mt-auto">
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate"><Warehouse size={12} className={isOutofStock ? 'text-red-500' : 'text-emerald-500'} /><span className="truncate italic leading-none line-clamp-1 break-all">{warehouses.find(w => w.id === p.warehouse_id)?.name || (lang === 'ro' ? 'NOD' : 'NODE')}</span></div>
+                  <div className={`flex items-center border rounded-xl px-2.5 py-1 ${isOutofStock ? 'bg-red-500/10 border-red-500/20' : 'bg-emerald-500/10 border-emerald-500/20'}`}><span className={`font-mono text-[10px] font-black tracking-[0.2em] leading-none ${isOutofStock ? 'text-red-400' : 'text-emerald-400'}`}>ID-{p.id}</span></div>
                 </div>
               </div>
-              <div className="relative z-10 pt-5 border-t border-slate-800/50 flex items-center justify-between mt-auto">
-                <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate"><Warehouse size={12} className="text-emerald-500 shrink-0" /><span className="truncate italic leading-none line-clamp-1 break-all">{warehouses.find(w => w.id === p.warehouse_id)?.name || (lang === 'ro' ? 'NOD' : 'NODE')}</span></div>
-                <div className="flex items-center bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-2.5 py-1"><span className="font-mono text-[10px] text-emerald-400 font-black tracking-[0.2em] leading-none">ID-{p.id}</span></div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -301,6 +347,7 @@ export default function Products({ lang = 'ro' }) {
             {modalType === 'delete' ? (
               <div className="text-center space-y-5 py-2">
                 <AlertTriangle className="h-12 w-12 text-red-500 mx-auto animate-pulse" /><h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">{lang === 'ro' ? 'Confirmi ștergerea?' : 'Confirm deletion?'}</h2>
+                {error && <div className="bg-red-500/10 text-red-500 text-[10px] font-black p-2.5 rounded-lg border border-red-500/20 flex items-center gap-2 uppercase tracking-widest"><AlertTriangle size={14}/> {error}</div>}
                 <div className="flex gap-3 max-w-xs mx-auto pt-2">
                   <button disabled={isSubmitting} onClick={closeModals} className="flex-1 py-3 bg-slate-800 text-slate-300 rounded-xl font-black uppercase text-[10px] tracking-widest cursor-pointer disabled:opacity-50">{lang === 'ro' ? 'Anulează' : 'Cancel'}</button>
                   <button disabled={isSubmitting} onClick={handleAction} className="flex-1 py-3 bg-red-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-red-600/20 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">{isSubmitting && <Loader2 size={12} className="animate-spin" />}{isSubmitting ? (lang === 'ro' ? 'SE ȘTERGE...' : 'DELETING...') : (lang === 'ro' ? 'ȘTERGE' : 'DELETE')}</button>
@@ -308,59 +355,81 @@ export default function Products({ lang = 'ro' }) {
               </div>
             ) : (
               <form onSubmit={handleAction} className="space-y-4">
-                <div className="flex justify-between items-center pb-3 border-b border-slate-800"><h2 className="text-xl font-black text-white uppercase italic tracking-tight leading-none">{modalType === 'add' ? (lang === 'ro' ? 'Produs nou' : 'New product') : modalType === 'put' ? (lang === 'ro' ? 'Sincronizare completă (PUT)' : 'Full sync (PUT)') : (lang === 'ro' ? 'Patch rapid' : 'Quick patch')}</h2><Package size={20} className="text-emerald-500" /></div>
+                <div className="flex justify-between items-center pb-3 border-b border-slate-800"><h2 className="text-xl font-black text-white uppercase italic tracking-tight leading-none">{modalType === 'add' ? (lang === 'ro' ? 'Produs nou' : 'New product') : modalType === 'put' ? (lang === 'ro' ? 'Sincronizare completă ( PUT )' : 'Full sync ( PUT )') : (lang === 'ro' ? 'Patch rapid' : 'Quick patch')}</h2><Package size={20} className="text-emerald-500" /></div>
                 {error && <div className="bg-red-500/10 text-red-500 text-[10px] font-black p-2.5 rounded-lg border border-red-500/20 flex items-center gap-2 uppercase tracking-widest"><AlertTriangle size={14}/> {error}</div>}
                 <div className="grid grid-cols-2 gap-3 font-mono">
                   <div className="col-span-2 bg-slate-950 border border-slate-800 rounded-xl p-2.5 focus-within:border-emerald-500/50 transition-all relative">
-                    <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold uppercase">{lang === 'ro' ? 'Nume' : 'Name'}</label>
-                    <input disabled={isSubmitting} maxLength={MAX_NAME} className="w-full bg-transparent text-white font-bold outline-none text-xs font-sans disabled:opacity-50" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                    <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold uppercase">{lang === 'ro' ? 'Nume' : 'Name'} <span className="text-emerald-500">*</span></label>
+                    <input placeholder={lang === 'ro' ? 'NUME' : 'NAME'} disabled={isSubmitting} maxLength={MAX_NAME} className="w-full bg-transparent text-white font-bold outline-none text-xs font-sans disabled:opacity-50" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
                     <span className="absolute right-3 top-3 text-[8px] text-slate-700">{formData.name.length}/{MAX_NAME}</span>
                   </div>
                   <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 relative">
-                    <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold uppercase">{lang === 'ro' ? 'Furnizor' : 'Supplier_id'}</label>
+                    <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold uppercase">{lang === 'ro' ? 'Furnizor' : 'Supplier_id'} <span className="text-emerald-500">*</span></label>
                     <button disabled={isSubmitting} type="button" onClick={() => setIsSupplierSelectOpen(!isSupplierSelectOpen)} className="w-full bg-transparent text-left font-bold text-xs flex items-center justify-between outline-none cursor-pointer text-white uppercase font-sans disabled:opacity-50"><span className="truncate">{formData.supplier_id ? `ID: ${formData.supplier_id} — ${currentFormSupplierName}` : (lang === 'ro' ? 'Selectează furnizor' : 'Select supplier')}</span><ChevronDown size={12} className={`text-slate-500 transition-transform ${isSupplierSelectOpen ? 'rotate-180 text-emerald-500' : ''}`} /></button>
                     {isSupplierSelectOpen && !isSubmitting && (
                       <><div className="fixed inset-0 z-30" onClick={() => setIsSupplierSelectOpen(false)} /><div className="absolute left-0 right-0 mt-2 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl overflow-hidden z-40 max-h-40 overflow-y-auto custom-scrollbar text-[10px]">{suppliers.map(s => (<div key={s.id} onClick={() => { setFormData({...formData, supplier_id: s.id}); setIsSupplierSelectOpen(false); }} className={`px-3 py-2 cursor-pointer flex items-center justify-between border-b border-slate-900/50 last:border-none font-sans ${formData.supplier_id.toString() === s.id.toString() ? 'bg-emerald-500/10 text-emerald-400 font-bold' : 'text-slate-300 hover:bg-slate-900'}`}><span className="truncate">ID: {s.id} — {s.name}</span>{formData.supplier_id.toString() === s.id.toString() && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />}</div>))}</div></>
                     )}
                   </div>
                   <div className={`bg-slate-950 border border-slate-800 rounded-xl p-2.5 relative ${(modalType !== 'add' || isSubmitting) ? 'opacity-60 cursor-not-allowed' : ''}`}>
-                    <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold uppercase">{lang === 'ro' ? 'Depozit' : 'Warehouse_id'}</label>
+                    <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold uppercase">{lang === 'ro' ? 'Depozit' : 'Warehouse_id'} <span className="text-emerald-500">*</span></label>
                     <button type="button" disabled={modalType !== 'add' || isSubmitting} onClick={() => setIsWarehouseSelectOpen(!isWarehouseSelectOpen)} className={`w-full bg-transparent text-left font-bold text-xs flex items-center justify-between outline-none uppercase font-sans ${(modalType !== 'add' || isSubmitting) ? 'cursor-not-allowed text-slate-600' : 'cursor-pointer text-white'}`}><span className="truncate">{formData.warehouse_id ? `ID: ${formData.warehouse_id} — ${currentFormWarehouseName}` : (lang === 'ro' ? 'Selectează depozit' : 'Select node')}</span>{modalType === 'add' && <ChevronDown size={12} className={`text-slate-500 transition-transform ${isWarehouseSelectOpen ? 'rotate-180 text-emerald-500' : ''}`} />}</button>
                     {isWarehouseSelectOpen && modalType === 'add' && !isSubmitting && (
                       <><div className="fixed inset-0 z-30" onClick={() => setIsWarehouseSelectOpen(false)} /><div className="absolute left-0 right-0 mt-2 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl overflow-hidden z-40 max-h-40 overflow-y-auto custom-scrollbar text-[10px]">{warehouses.map(w => (<div key={w.id} onClick={() => { setFormData({...formData, warehouse_id: w.id}); setIsWarehouseSelectOpen(false); }} className={`px-3 py-2 cursor-pointer flex items-center justify-between border-b border-slate-900/50 last:border-none font-sans ${formData.warehouse_id.toString() === w.id.toString() ? 'bg-emerald-500/10 text-emerald-400 font-bold' : 'text-slate-300 hover:bg-slate-900'}`}><span className="truncate">ID: {w.id} — {w.name}</span>{formData.warehouse_id.toString() === w.id.toString() && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />}</div>))}</div></>
                     )}
                   </div>
                   <div className="col-span-2 bg-slate-950 border border-slate-800 rounded-xl p-2.5 focus-within:border-emerald-500/50 transition-all relative">
-                    <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold flex items-center gap-1 uppercase"><FileText size={10}/> {lang === 'ro' ? 'Descriere' : 'Description'}</label>
-                    <textarea disabled={isSubmitting} maxLength={MAX_DESC} rows="2" className="w-full bg-transparent text-slate-300 font-medium outline-none resize-none text-xs font-sans disabled:opacity-50" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />
+                    <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold flex items-center gap-1 uppercase"><FileText size={10}/> {lang === 'ro' ? 'Descriere' : 'Description'} <span className="text-emerald-500">*</span></label>
+                    <textarea   placeholder={lang === 'ro' ? 'DESCRIERE' : 'DESCRIPTION'} disabled={isSubmitting} maxLength={MAX_DESC} rows="2" className="w-full bg-transparent text-slate-300 font-medium outline-none resize-none text-xs font-sans disabled:opacity-50" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />
                     <span className="absolute right-3 top-3 text-[8px] text-slate-700">{formData.description.length}/{MAX_DESC}</span>
                   </div>
                   <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 relative focus-within:border-emerald-500/50 transition-all">
-                    <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold uppercase">SKU</label>
-                    <input disabled={isSubmitting} maxLength={MAX_SKU} className="w-full bg-transparent text-white font-bold outline-none uppercase text-xs disabled:opacity-50" value={formData.sku} onChange={(e) => setFormData({...formData, sku: e.target.value})} />
+                    <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold uppercase">SKU <span className="text-emerald-500">*</span></label>
+                    <input  placeholder={lang === 'ro' ? 'SKU' : 'SKU'}disabled={isSubmitting} maxLength={MAX_SKU} className="w-full bg-transparent text-white font-bold outline-none uppercase text-xs disabled:opacity-50" value={formData.sku} onChange={(e) => setFormData({...formData, sku: e.target.value})} />
                     <span className="absolute right-3 top-3 text-[8px] text-slate-700">{formData.sku.length}/{MAX_SKU}</span>
                   </div>
                   <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 relative focus-within:border-emerald-500/50 transition-all">
-                    <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold uppercase">{lang === 'ro' ? 'Categorie' : 'Category'}</label>
-                    <input disabled={isSubmitting} maxLength={MAX_CAT} className="w-full bg-transparent text-white font-bold outline-none uppercase text-xs font-sans disabled:opacity-50" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} />
+                    <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold uppercase">{lang === 'ro' ? 'Categorie' : 'Category'} <span className="text-emerald-500">*</span></label>
+                    <input  placeholder={lang === 'ro' ? 'CATEGORIE' : 'CATEGORY'} disabled={isSubmitting} maxLength={MAX_CAT} className="w-full bg-transparent text-white font-bold outline-none uppercase text-xs font-sans disabled:opacity-50" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} />
                     <span className="absolute right-3 top-3 text-[8px] text-slate-700">{formData.category.length}/{MAX_CAT}</span>
                   </div>
                   <div className={`bg-slate-950 border border-slate-800 rounded-xl p-2.5 relative focus-within:border-emerald-500/50 transition-all ${modalType === 'add' ? '' : 'col-span-2'}`}>
-                    <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold uppercase">{lang === 'ro' ? 'Preț' : 'Price'}</label>
-                    <input disabled={isSubmitting} type="number" step="0.01" className="w-full bg-transparent text-white font-bold outline-none no-spinner text-xs disabled:opacity-50" value={formData.price} onChange={(e) => { if(e.target.value.length <= MAX_PRICE_LEN) setFormData({...formData, price: e.target.value})}} />
+                    <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold uppercase">{lang === 'ro' ? 'Preț' : 'Price'} <span className="text-emerald-500">*</span></label>
+                      <input placeholder={lang === 'ro' ? '20.0' : '20.0'} disabled={isSubmitting} type="number" step="0.01" className="w-full bg-transparent text-white font-bold outline-none no-spinner text-xs disabled:opacity-50" value={formData.price} onChange={(e) => { if (e.target.value.length <= MAX_PRICE_LEN) setFormData({ ...formData, price: e.target.value }) }} />
+                    {formData.price !== '' && (isNaN(parseFloat(formData.price)) || !isFinite(formData.price)) && (
+                      <p className="text-[9px] text-red-500 font-bold mt-1">
+                        {lang === 'ro' ? 'Trebuie să introduci un număr valid' : 'Must be a valid number'}
+                      </p>
+                    )}
                     <span className="absolute right-3 top-3 text-[8px] text-slate-700">{formData.price.length}/{MAX_PRICE_LEN}</span>
                   </div>
+                    
                   {modalType === 'add' && (
                     <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 relative">
-                      <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold uppercase">{lang === 'ro' ? 'Cantitate stoc' : 'Stock quantity'}</label>
-                      <input disabled={isSubmitting} type="number" className="w-full bg-transparent text-white font-bold outline-none no-spinner text-xs disabled:opacity-50" value={formData.stockQuantity} onChange={(e) => { if(e.target.value.length <= MAX_STOCK_LEN) setFormData({...formData, stockQuantity: e.target.value})}} />
-                      <span className="absolute right-3 top-3 text-[8px] text-slate-700">{formData.stockQuantity.length}/{MAX_STOCK_LEN}</span>
-                    </div>
-                  )}
+                      <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold uppercase">{lang === 'ro' ? 'Cantitate stoc' : 'Stock quantity'} <span className="text-emerald-500">*</span></label>
+                      <input placeholder={lang === 'ro' ? '20' : '20'} disabled={isSubmitting} type="number" className="w-full bg-transparent text-white font-bold outline-none no-spinner text-xs disabled:opacity-50" value={formData.stockQuantity} onChange={(e) => { if(e.target.value.length <= MAX_STOCK_LEN) setFormData({...formData, stockQuantity: e.target.value})}} />
+                    {formData.stockQuantity !== '' && (isNaN(parseFloat(formData.stockQuantity)) || !isFinite(formData.stockQuantity)) && (
+                      <p className="text-[9px] text-red-500 font-bold mt-1">
+                        {lang === 'ro' ? 'Trebuie să introduci un număr valid' : 'Must be a valid number'}
+                      </p>
+                    )}
+                    <span className="absolute right-3 top-3 text-[8px] text-slate-700">{formData.stockQuantity.length}/{MAX_STOCK_LEN}</span>
+                  </div>
+                )}
                 </div>
                 <div className="flex gap-3 pt-3 font-sans">
                   <button disabled={isSubmitting} type="button" onClick={closeModals} className="flex-1 py-3 text-slate-500 font-black uppercase text-[10px] tracking-widest cursor-pointer hover:text-white transition-colors disabled:opacity-50">{lang === 'ro' ? 'Anulează' : 'Cancel'}</button>
-                  <button disabled={isSubmitting} type="submit" className={`flex-1 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 ${isSubmitting ? 'bg-slate-800 text-slate-500' : 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'}`}>{isSubmitting && <Loader2 size={12} className="animate-spin" />}{isSubmitting ? (lang === 'ro' ? 'SE PROCESEAZĂ...' : 'PROCESSING...') : (lang === 'ro' ? 'CONFIRMĂ' : 'CONFIRM')}</button>
+                  <button 
+                    disabled={isSubmitting || !isFormValid()} 
+                    type="submit" 
+                    className={`flex-1 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 ${
+                      (isSubmitting || !isFormValid()) 
+                        ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
+                        : 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'
+                    }`}
+                  >
+                    {isSubmitting && <Loader2 size={12} className="animate-spin" />}
+                    {isSubmitting ? (lang === 'ro' ? 'SE PROCESEAZĂ...' : 'PROCESSING...') : (lang === 'ro' ? 'CONFIRMĂ' : 'CONFIRM')}
+                  </button>
                 </div>
               </form>
             )}

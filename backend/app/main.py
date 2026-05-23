@@ -30,5 +30,6 @@ app.add_middleware(
 
 app.include_router(warehouses.router)
 app.include_router(suppliers.router)
+app.include_router(products.general_router)
 app.include_router(products.router)
 app.include_router(stock.router)
