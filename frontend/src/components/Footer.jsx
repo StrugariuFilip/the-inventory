@@ -49,8 +49,8 @@ export default function Footer({ lang = 'ro' }) {
             </a>
                       
             <a 
-              href={lang === 'ro' ? './public/The-Inventory.pdf' : './public/The-Inventory-EN.pdf'}
-              download={lang === 'ro' ? 'The-Inventory.pdf' : 'The-Inventory-EN.pdf'}
+            href={lang === 'ro' ? '/The-Inventory.pdf' : '/The-Inventory-EN.pdf'}
+            download={lang === 'ro' ? 'The-Inventory.pdf' : 'The-Inventory-EN.pdf'}
               className="group flex items-center space-x-2 hover:text-white transition-all duration-300 cursor-pointer"
             >
               <FileText className="h-4 w-4 text-indigo-400 group-hover:-translate-y-1 group-hover:text-indigo-300 transition-all duration-300" />

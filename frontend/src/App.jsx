@@ -59,7 +59,6 @@ export default function App() {
                 </a>
               </div>
             </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center max-w-6xl mx-auto px-4">
               <div className="space-y-6">
                 <h3 className="text-indigo-400 font-black uppercase tracking-[0.3em] text-xs">{lang === 'ro' ? 'Motivație' : 'Motivation'}</h3>
@@ -84,7 +83,6 @@ export default function App() {
                 ))}
               </div>
             </div>
-
              <div className="pt-8">
               <div className="text-center mb-16">
                 <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white uppercase italic mb-4">{lang === 'ro' ? 'Arhitectură sistem' : 'System architecture'}</h2>
