@@ -48,6 +48,14 @@ Proiectul a fost inspirat de platforma [ASSIST Learning](https://learning.assist
 
 ---
 
+## 🛡️ Defensive Layers & Data Integrity
+
+Sistemul a fost construit cu o abordare de "apărare în adâncime" pentru a asigura integritatea datelor la fiecare nivel:
+
+- **Frontend Validation:** Filtrarea instantanee a input-urilor pentru a preveni erorile de UX și a direcționa corect utilizatorul înainte de orice request.
+- **API Contract Enforcement:** Documentația Swagger (`/docs`) servește ca prim strat de contract; orice request care nu respectă schemele definite este respins automat prin validările FastAPI/Pydantic.
+- **Database Integrity:** Gestionarea erorilor de integritate (ex: _IntegrityError_) la nivel de ORM/Bază de date, prevenind stările inconsistente în cazul unor tranzacții invalide sau a violării cheilor externe.
+
 ## 💻 Instalare și Pornire (Local)
 
 ### **1. Backend (FastAPI)**
@@ -81,9 +89,16 @@ Sistemul gestionează relații complexe între:
 
 ---
 
+## 📱 Acces Rapid
+
+Scanează codul de mai jos pentru a accesa **The Inventory** direct de pe dispozitivul tău mobil:
+
+![QR Code pentru The Inventory](frontend/public/QR.png)
+
 ## 🔗 Link-uri Utile
 
 - **Portofoliu:** https://fermo.top/cv/
+- **Site-ul proiectului:** https://fermo.top/The-inventory/
 - **GitHub Profile:** https://github.com/StrugariuFilip
 
 ---
