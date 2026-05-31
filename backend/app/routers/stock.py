@@ -47,10 +47,6 @@ def increase_stock(warehouseId: int, productId: int, req: schemas.StockIncreaseR
     if not warehouse:
         raise HTTPException(status_code=404, detail="Specified warehouse does not exist.")
 
-    supplier = db.query(models.Supplier).filter(models.Supplier.id == req.supplierId).first()
-    if not supplier:
-        raise HTTPException(status_code=404, detail=f"Supplier with ID {req.supplierId} does not exist.")
-
     product = db.query(models.Product).filter(
         models.Product.id == productId, 
         models.Product.warehouse_id == warehouseId
@@ -58,6 +54,12 @@ def increase_stock(warehouseId: int, productId: int, req: schemas.StockIncreaseR
     
     if not product:
         raise HTTPException(status_code=404, detail="Product not found in the specified warehouse.")
+  
+    if not getattr(req, 'reason', None) or req.reason.strip() == "":
+        raise HTTPException(
+            status_code=400, 
+            detail="Transaction reason is mandatory."
+        )
         
     try:
         product.stockQuantity += req.quantity
@@ -67,9 +69,12 @@ def increase_stock(warehouseId: int, productId: int, req: schemas.StockIncreaseR
         db.rollback()
         raise HTTPException(status_code=500, detail="Internal error occurred while increasing stock.")
         
+    reason_text = getattr(req, 'reason', 'Nespecificat')
+    
     return {
-        "message": "Stock increased successfully", 
-        "newStockQuantity": product.stockQuantity
+        "message": f"Stock increased successfully (Reason: {reason_text})", 
+        "newStockQuantity": product.stockQuantity,
+        "reason": reason_text
     }
 
 

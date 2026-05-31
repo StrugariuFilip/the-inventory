@@ -328,7 +328,7 @@ export default function Warehouses({ lang = 'ro' }) {
                 <div className="space-y-3 font-mono">
                   <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 focus-within:border-amber-500/50 transition-all relative">
                      <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold uppercase">
-                       {lang === 'ro' ? 'Nume' : 'Name'} {(modalType === 'add' || modalType === 'put') && <span className="text-amber-500">*</span>}
+                       {lang === 'ro' ? 'Nume' : 'Name'} {(modalType === 'add' || modalType === 'put' || modalType === 'patch' ) && <span className="text-amber-500">*</span>}
                      </label>
                      <input 
                       disabled={isSubmitting}
@@ -343,7 +343,7 @@ export default function Warehouses({ lang = 'ro' }) {
 
                   <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 focus-within:border-amber-500/50 transition-all relative">
                      <label className="text-[9px] text-slate-500 block mb-1 tracking-wider font-bold uppercase">
-                       {lang === 'ro' ? 'Locație' : 'Location'} {(modalType === 'add' || modalType === 'put') && <span className="text-amber-500">*</span>}
+                       {lang === 'ro' ? 'Locație' : 'Location'} {(modalType === 'add' || modalType === 'put' || modalType === 'patch') && <span className="text-amber-500">*</span>}
                      </label>
                      <input 
                       disabled={isSubmitting}

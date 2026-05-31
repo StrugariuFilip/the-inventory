@@ -67,7 +67,7 @@ class ProductResponse(ProductBase):
 
 class StockIncreaseRequest(BaseModel):
     quantity: int
-    supplierId: int  
+    reason: str = None
 
 class StockDecreaseRequest(BaseModel):
     quantity: int

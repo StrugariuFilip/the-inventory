@@ -83,7 +83,7 @@ export default function Stock({ lang = 'ro' }) {
       return;
     }
 
-    if ((mode === 'transfer' || mode === 'decrease') && !reason.trim()) {
+    if (!reason.trim()) {
       setError(lang === 'ro' ? "Motivul este obligatoriu pentru această operațiune." : "A reason is required for this operation.");
       return;
     }
@@ -122,7 +122,7 @@ export default function Stock({ lang = 'ro' }) {
         setSourceProducts(res.data);
       } else if (mode === 'increase') {
         url = `${baseUrl}/increase`;
-        payload = { quantity: qty, supplierId: currentProduct.supplier_id };
+        payload = { quantity: qty, reason: reason.trim() };
         successLabel = lang === 'ro' ? `STOC SUPLIMENTAT: +${qty}x ${currentProduct.name}` : `STOCK INCREASED: +${qty}x ${currentProduct.name}`;
         setTransferQuantity('');
         setReason('');
@@ -323,10 +323,10 @@ export default function Stock({ lang = 'ro' }) {
                 <div className="text-left"><span className="text-[8px] text-indigo-400 block uppercase font-mono font-bold">{lang === 'ro' ? 'CALCULAT' : 'CALCULATED'}</span><span className={`text-xl font-black font-mono ${mode === 'increase' ? 'text-emerald-400' : 'text-amber-400'}`}>{calculatedStock}</span></div>
               </div>
               <p className="text-[10px] text-slate-500 italic">{mode === 'increase' ? (lang === 'ro' ? 'Unitățile vor fi adăugate la unitatea sursă.' : 'Units will be added to source facility.') : (lang === 'ro' ? 'Unitățile vor fi scăzute definitiv.' : 'Units will be deducted permanently.')}</p>
-              {mode === 'decrease' && (
+              {(mode === 'decrease' || mode === 'increase') && (
                 <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 relative text-left mt-2">
-                  <label className="text-[9px] text-slate-500 block mb-1 font-bold tracking-wider font-mono uppercase">{lang === 'ro' ? 'MOTIV SCĂDERE' : 'DECREASE REASON'} <span className="text-emerald-500">*</span></label>
-                  <input disabled={isSubmitting} type="text" placeholder={lang === 'ro' ? 'Ex: Produs deteriorat' : 'Ex: Damaged product'} className="w-full bg-transparent text-white font-bold text-xs outline-none font-sans disabled:opacity-50" value={reason} onChange={(e) => setReason(e.target.value)} />
+                  <label className="text-[9px] text-slate-500 block mb-1 font-bold tracking-wider font-mono uppercase">{mode === 'increase' ? (lang === 'ro' ? 'MOTIV SUPLIMENTARE' : 'INCREASE REASON') : (lang === 'ro' ? 'MOTIV SCĂDERE' : 'DECREASE REASON')} <span className="text-emerald-500">*</span></label>
+                  <input disabled={isSubmitting} type="text" placeholder={mode === 'increase' ? (lang === 'ro' ? 'Ex: Recepție marfă' : 'Ex: Stock receipt') : (lang === 'ro' ? 'Ex: Produs deteriorat' : 'Ex: Damaged product')} className="w-full bg-transparent text-white font-bold text-xs outline-none font-sans disabled:opacity-50" value={reason} onChange={(e) => setReason(e.target.value)} />
                 </div>
               )}
             </div>

@@ -341,7 +341,7 @@ export default function Suppliers({ lang = 'ro' }) {
                 <div className="space-y-3 font-mono">
                   <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 focus-within:border-sky-500/50 transition-all relative">
                     <label className="text-[9px] text-slate-500 block mb-1 font-bold uppercase">
-                      {lang === 'ro' ? 'Nume' : 'Name'} {(modalType === 'add' || modalType === 'put') && <span className="text-sky-500">*</span>}
+                      {lang === 'ro' ? 'Nume' : 'Name'} {(modalType === 'add' || modalType === 'put' || modalType === 'patch') && <span className="text-sky-500">*</span>}
                     </label>
                     <input disabled={isSubmitting} type="text" maxLength={MAX_NAME} placeholder={lang === 'ro' ? 'NUME' : 'NAME'} className="w-full bg-transparent border-none text-white font-bold p-0 outline-none focus:ring-0 text-xs font-sans disabled:opacity-50" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
                     <span className="absolute right-3 top-3 text-[8px] font-mono text-slate-700">{formData.name.length}/{MAX_NAME}</span>
@@ -349,7 +349,7 @@ export default function Suppliers({ lang = 'ro' }) {
                   
                   <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 focus-within:border-sky-500/50 transition-all relative">
                     <label className="text-[9px] text-slate-500 block mb-1 font-bold uppercase">
-                      {lang === 'ro' ? 'Adresă de email' : 'Contact email'} {(modalType === 'add' || modalType === 'put') && <span className="text-sky-500">*</span>}
+                      {lang === 'ro' ? 'Adresă de email' : 'Contact email'} {(modalType === 'add' || modalType === 'put' || modalType === 'patch') && <span className="text-sky-500">*</span>}
                     </label>
                     <input disabled={isSubmitting} type="text" maxLength={MAX_EMAIL} placeholder={lang === 'ro' ? 'EMAIL' : 'EMAIL'} className="w-full bg-transparent border-none text-white font-bold p-0 outline-none focus:ring-0 text-xs font-sans disabled:opacity-50" value={formData.contact_email} onChange={(e) => setFormData({...formData, contact_email: e.target.value})} />
                     <span className="absolute right-3 top-3 text-[8px] font-mono text-slate-700">{formData.contact_email.length}/{MAX_EMAIL}</span>
@@ -363,7 +363,7 @@ export default function Suppliers({ lang = 'ro' }) {
                   
                   <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 focus-within:border-sky-500/50 transition-all relative">
                     <label className="text-[9px] text-slate-500 block mb-1 font-bold uppercase">
-                      {lang === 'ro' ? 'Număr de telefon' : 'Phone number'} {(modalType === 'add' || modalType === 'put') && <span className="text-sky-500">*</span>}
+                      {lang === 'ro' ? 'Număr de telefon' : 'Phone number'} {(modalType === 'add' || modalType === 'put' || modalType === 'patch') && <span className="text-sky-500">*</span>}
                     </label>
                     <input disabled={isSubmitting} type="text" placeholder={lang === 'ro' ? 'TELEFON' : 'PHONE'} className="w-full bg-transparent border-none text-white font-bold p-0 outline-none focus:ring-0 text-xs font-sans disabled:opacity-50" value={formData.phone_number} onChange={handlePhoneChange} />
                     <span className="absolute right-3 top-3 text-[8px] font-mono text-slate-700">{formData.phone_number.length}/{MAX_PHONE}</span>
